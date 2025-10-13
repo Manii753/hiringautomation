@@ -1,4 +1,3 @@
-
 import { google } from 'googleapis'
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
@@ -17,12 +16,34 @@ export async function GET() {
   const drive = google.drive({ version: 'v3', auth: oauth2Client })
 
   try {
-    const response = await drive.files.list({
-      q: "(name contains 'Interview' or name contains 'Transcript') and (mimeType = 'text/plain' or mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' or mimeType = 'application/pdf')",
-      fields: 'files(id, name, createdTime, mimeType)',
+    // 1️⃣ Find the folder by name
+    const folderName = 'Meet Recordings'
+    const folderRes = await drive.files.list({
+      q: `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`,
+      fields: 'files(id, name)',
     })
 
-    return NextResponse.json(response.data.files)
+    if (!folderRes.data.files.length) {
+      return NextResponse.json({ error: `Folder "${folderName}" not found.` }, { status: 404 })
+    }
+
+    const folderId = folderRes.data.files[0].id
+
+    // 2️⃣ Get all files inside that folder
+    const filesRes = await drive.files.list({
+      q: `'${folderId}' in parents 
+          and trashed=false 
+          and (mimeType='application/pdf' 
+            or mimeType='application/vnd.google-apps.document' 
+            or mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+            or mimeType='text/plain') 
+          and name contains 'interview'
+          and name contains 'notes by gemini'`,
+      fields: 'files(id, name, mimeType, createdTime)',
+    });
+
+
+    return NextResponse.json(filesRes.data.files)
   } catch (error) {
     console.error('Error fetching files from Google Drive:', error)
     return NextResponse.json({ error: 'Error fetching files from Google Drive' }, { status: 500 })
