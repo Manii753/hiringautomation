@@ -6,22 +6,38 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
-import { Badge } from "@/components/ui/badge"
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+
+
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { DatePickerDemo } from "@/components/ui/datepicker";
 
 const CandidateList = () => {
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [date, setDate] = useState(null);
   const router = useRouter();
-
-
 
   useEffect(() => {
     fetchCandidates();
   }, []);
+
   function extractNameFromFileName(fileName) {
     const match = fileName.match(/Interview\s*\(([^)]+)\)/i);
     return match ? match[1].trim() : "Not found";
   }
+
   const fetchCandidates = async () => {
     try {
       setLoading(true);
@@ -29,12 +45,21 @@ const CandidateList = () => {
       const data = await response.json();
       setCandidates(data);
       setLoading(false);
-      console.log(data);
-      
     } catch (err) {
       setLoading(false);
     }
   };
+
+  const filteredCandidates = candidates.filter(candidate => {
+    const name = extractNameFromFileName(candidate.name).toLowerCase();
+    const status = candidate.appProperties?.status || "pending";
+    const createdDate = new Date(candidate.createdTime);
+    return (
+      (name.includes(searchTerm.toLowerCase())) &&
+      (statusFilter === "all" || status === statusFilter) &&
+      (!date || createdDate.toDateString() === date.toDateString())
+    );
+  });
 
   if (loading) {
     return (
@@ -52,6 +77,29 @@ const CandidateList = () => {
         <p className="text-gray-500 mt-2">Review and manage interview candidates</p>
       </div>
 
+      <div className="flex items-center justify-between">
+        <Input
+          placeholder="Search by name..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-sm"
+        />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">Filter by Status</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuLabel>Status</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setStatusFilter("all")}>All</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setStatusFilter("pending")}>Pending</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setStatusFilter("pass")}>Pass</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setStatusFilter("fail")}>Fail</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <DatePickerDemo date={date} setDate={setDate} />
+      </div>
+
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -59,20 +107,13 @@ const CandidateList = () => {
               <thead className="bg-gray-50 border-b">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">interview Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Interview Date</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {candidates.map((candidate) => {
+                {filteredCandidates.map((candidate) => {
                   const status = candidate.appProperties?.status || "pending";
-
-                  const badgeClass =
-                  status === "pass"
-                    ? "green"
-                    : status === "fail"
-                    ? "destructive"
-                    : "secondary";
 
                   return (
                     <tr
@@ -88,9 +129,11 @@ const CandidateList = () => {
                       </td>
 
                       <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge variant={badgeClass} className={`text-center font-medium px-3 py-1`}>
-                            {status.charAt(0).toUpperCase() + status.slice(1)}
-                          </Badge>
+                        <Badge
+                          variant={status === "pass" ? "default" : status === "fail" ? "destructive" : "secondary"}
+                          className={`text-center font-medium px-3 py-1 ${status === "pass" ? "bg-green-500" : ""}`}>
+                          {status.charAt(0).toUpperCase() + status.slice(1)}
+                        </Badge>
                       </td>
 
                       <td className="px-6 py-4 whitespace-nowrap text-right">
@@ -104,6 +147,7 @@ const CandidateList = () => {
                       </td>
                     </tr>
                   );
+
                 })}
               </tbody>
             </table>
