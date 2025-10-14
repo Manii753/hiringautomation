@@ -11,7 +11,7 @@ async function getFileContent(drive, fileId, mimeType) {
       {
         fileId,
         mimeType:
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",        
       },
       { responseType: "arraybuffer" }
     );
@@ -75,7 +75,7 @@ export async function GET(request, context) {
   try {
     const fileMetadata = await drive.files.get({
       fileId,
-      fields: "name,createdTime,mimeType",
+      fields: "name,createdTime,mimeType,appProperties",
       supportsAllDrives: true,
     });
 
@@ -87,9 +87,20 @@ export async function GET(request, context) {
 
     const parsedData = parseFileContent(content, fileMetadata.data.name);
 
+    let webhookResponse = null;
+    if (fileMetadata.data.appProperties?.webhookResponse) {
+        try {
+            webhookResponse = JSON.parse(fileMetadata.data.appProperties.webhookResponse);
+        } catch (e) {
+            console.error("Failed to parse webhookResponse", e);
+        }
+    }
+
     const response = {
       id: fileId,
       ...fileMetadata.data,
+      status: fileMetadata.data.appProperties?.status || 'pending',
+      webhookResponse: webhookResponse,
       ...parsedData,
     };
 

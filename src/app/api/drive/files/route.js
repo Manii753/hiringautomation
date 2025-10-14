@@ -17,13 +17,14 @@ export async function GET() {
 
   try {
     // 1️⃣ Find the folder by name
-    const folderName = 'Meet Recordings'
+    const folderName = 'Recordings'
     const folderRes = await drive.files.list({
       q: `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`,
       fields: 'files(id, name)',
     })
 
     if (!folderRes.data.files.length) {
+      console.log("folder not found")
       return NextResponse.json({ error: `Folder "${folderName}" not found.` }, { status: 404 })
     }
 
@@ -39,7 +40,7 @@ export async function GET() {
             or mimeType='text/plain') 
           and name contains 'interview'
           and name contains 'notes by gemini'`,
-      fields: 'files(id, name, mimeType, createdTime)',
+      fields: 'files(id, name, mimeType, createdTime,appProperties)',
     });
 
 

@@ -6,6 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
+import { Badge } from "@/components/ui/badge"
 
 const CandidateList = () => {
   const [candidates, setCandidates] = useState([]);
@@ -28,6 +29,8 @@ const CandidateList = () => {
       const data = await response.json();
       setCandidates(data);
       setLoading(false);
+      console.log(data);
+      
     } catch (err) {
       setLoading(false);
     }
@@ -61,22 +64,47 @@ const CandidateList = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {candidates.map((candidate) => (
-                  <tr key={candidate.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{extractNameFromFileName(candidate.name)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-600">{new Date(candidate.createdTime).toLocaleDateString()}</td>
-                    
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => router.push(`/candidate/${candidate.id}`)}
-                      >
-                        View Details
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
+                {candidates.map((candidate) => {
+                  const status = candidate.appProperties?.status || "pending";
+
+                  const badgeClass =
+                  status === "pass"
+                    ? "green"
+                    : status === "fail"
+                    ? "destructive"
+                    : "secondary";
+
+                  return (
+                    <tr
+                      key={candidate.id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
+                        {extractNameFromFileName(candidate.name)}
+                      </td>
+
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                        {new Date(candidate.createdTime).toLocaleDateString()}
+                      </td>
+
+                      <td className="px-6 py-4 whitespace-nowrap">
+                          <Badge variant={badgeClass} className={`text-center font-medium px-3 py-1`}>
+                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                          </Badge>
+                      </td>
+
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => router.push(`/candidate/${candidate.id}`)}
+                        >
+                          View Details
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
