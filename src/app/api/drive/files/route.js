@@ -1,10 +1,11 @@
 import { google } from 'googleapis'
 import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import { authOptions } from "@/lib/auth"
 import { NextResponse } from 'next/server'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
+  console.log("DRIVE SESSION",session)
 
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -17,7 +18,7 @@ export async function GET() {
 
   try {
     // 1️⃣ Find the folder by name
-    const folderName = 'Meet Recordings'
+    const folderName = 'Recordings'
     const folderRes = await drive.files.list({
       q: `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`,
       fields: 'files(id, name)',

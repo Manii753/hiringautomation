@@ -8,9 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-
-
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -186,10 +183,15 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-semibold">Hiring Manager Dashboard</h1>
-              <p className="text-xs text-gray-500 mt-1">Powered by n8n Automation</p>
+              <h1 className="text-2xl font-bold">Hiring Manager Dashboard</h1>
+              <p className="text-lg text-gray-500">{session.user.name}</p>
+            
             </div>
-            <Button variant="outline" onClick={() => signOut({ callbackUrl: '/login' })}>Logout</Button>
+            <div className="flex items-center space-x-4">
+              <img src={session.user.image} alt="Profile" className="w-8 h-8 rounded-full" />
+              <Button variant="outline" onClick={() => signOut({ callbackUrl: '/login' })}>Logout</Button>
+            </div>
+            
           </div>
         </div>
       </header>
