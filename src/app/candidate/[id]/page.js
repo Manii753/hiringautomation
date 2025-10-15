@@ -61,6 +61,7 @@ const CandidateDetailPage = () => {
       }
       setLoading(false);
       console.log(candidate);
+      console.log(data);
     } catch (err) {
       setLoading(false);
     }
@@ -147,10 +148,14 @@ const CandidateDetailPage = () => {
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">{candidate.candidateName}</h1>
                 <p className="text-gray-500 mt-1">{candidate.email}</p>
-                <p className="text-sm text-gray-400 mt-1">
-                  Interviewed on {candidate.interviewDate ? new Date(candidate.interviewDate).toLocaleDateString() : 'N/A'}
-                </p>
-                <Badge variant={candidate.appProperties?.status === 'pass' ? "green" : candidate.appProperties?.status === 'fail' ? "destructive" : "default"} className="mt-2 h-8 w-11 flex items-center justify-center">{candidate.appProperties?.status || 'pending'}</Badge>
+                <div className='flex gap-2'> 
+                  <Badge variant={"outline"} className={"mt-2 h-8 w-fit flex items-center justify-center"}>
+                    Interviewed on {candidate.interviewDate ? new Date(candidate.interviewDate).toLocaleDateString() : 'N/A'}
+                  </Badge>
+                  <Badge variant={"outline"} className={"mt-2 h-8 w-fit flex items-center justify-center"}> {candidate.interviewTime} </Badge>
+                </div> 
+                <Badge variant={candidate.appProperties?.status === 'pass' ? "green" : candidate.appProperties?.status === 'fail' ? "destructive" : "default"} className="mt-2 h-8 w-fit flex items-center justify-center">{candidate.appProperties?.status || 'pending'}</Badge>
+                
             </div>
 
             <div className="grid grid-cols-1 gap-6">

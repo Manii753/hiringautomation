@@ -17,7 +17,7 @@ export async function GET() {
 
   try {
     // 1️⃣ Find the folder by name
-    const folderName = 'Recordings'
+    const folderName = 'Meet Recordings'
     const folderRes = await drive.files.list({
       q: `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`,
       fields: 'files(id, name)',

@@ -38,21 +38,26 @@ async function getFileContent(drive, fileId, mimeType) {
 
 function parseFileContent(content, fileName = "") {
   const nameMatch = fileName.match(/\(([^)]+)\)/);
-  const dateMatch = fileName.match(/(\d{4}_\d{2}_\d{2})/);
-  const timeMatch = fileName.match(/(\d{2}_\d{2} PDT)/);
-  const detailsMatch = content.match(/Details([\s\S]*?)(?=Suggested next steps|📖 Transcript|$)/i);
-  const nextStepsMatch = content.match(/Suggested next steps([\s\S]*?)(?=📖 Transcript|$)/i);
+  const dateMatch = fileName.match(/(\d{4})[\/\-_](\d{2})[\/\-_](\d{2})/);
+  const timeMatch = fileName.match(/(\d{2})[:_](\d{2})\s*(PDT|UTC|GMT|EST|PST)?/i);
   const companyMatch = fileName.match(/^(.*?)\s*[_-]/);
   const emailMatch = content.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-  const transcriptMatch = content.match(/Transcript([\s\S]*?)(?=Summary|$)/i);
   const summaryMatch = content.match(/Summary([\s\S]*?)(?=Details|Professional|$)/i);
+
+  const interviewDate = dateMatch
+    ? `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}`
+    : "Unknown";
+
+  const interviewTime = timeMatch
+    ? `${timeMatch[1]}:${timeMatch[2]} ${timeMatch[3] ? timeMatch[3].toUpperCase() : ""}`.trim()
+    : "Unknown";
 
   return {
     candidateName: nameMatch ? nameMatch[1].trim() : "Unknown",
     company: companyMatch ? companyMatch[1].trim() : "Unknown",
     email: emailMatch ? emailMatch[0] : "Unknown",
-    interviewDate: dateMatch ? dateMatch[1].replace(/_/g, "-") : "Unknown",
-    interviewTime: timeMatch ? timeMatch[1].replace("_", ":") : "Unknown",
+    interviewDate,
+    interviewTime,
     summary: summaryMatch ? summaryMatch[1].trim() : "No summary found.",
     content: content,
   };
