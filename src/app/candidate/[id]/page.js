@@ -59,6 +59,9 @@ const CandidateDetailPage = () => {
       if (data.webhookResponse) {
         setWebhookResponse(data.webhookResponse);
       }
+      if (data.managerComment) {
+        setManagerComment(data.managerComment);
+      }
       setLoading(false);
       console.log(candidate);
       console.log(data);
@@ -186,7 +189,7 @@ const CandidateDetailPage = () => {
                                 onChange={(e) => setManagerComment(e.target.value)}
                                 className="min-h-[150px]"
                             />
-                            <div className="space-x-2 space-y-2">
+                            <div className="space-x-2 space-y-2" style={{display: webhookResponse ? 'none' : 'flex'}}>
                                 <Button 
                                     onClick={() => handleStatusChange('pass')} 
                                     disabled={isSubmitting || candidate.status === 'pass'}
@@ -209,9 +212,24 @@ const CandidateDetailPage = () => {
                         </CardContent>
                     </Card>
                 </div>
-                {webhookResponse && (
-                        <CandidateSummary data={webhookResponse.content} />
-                )}
+                <div>
+                  {webhookResponse && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>AI Evaluation Summary</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {Object.entries(webhookResponse).map(([key, value]) => (
+                          <div key={key}>
+                            <h3 className="font-semibold text-gray-800">{key}</h3>
+                            <p className="text-gray-600">{value}</p>
+                          </div>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>  
+
             </div>
         </div>
       </main>

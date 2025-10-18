@@ -2,6 +2,8 @@ import { google } from 'googleapis';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from "@/lib/auth";
 import { NextResponse } from 'next/server'; 
+import dbConnect from '@/lib/dbConnect';
+import Candidate from '@/lib/models/Candidate';
 
 const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL;
 
@@ -50,10 +52,16 @@ export async function POST(request) {
 
     console.log('Webhook response data:', webhookData);
 
-    
+    await dbConnect();
 
-    
-    
+    await Candidate.findOneAndUpdate(
+      { fileId: fileId },
+      { 
+        managerComment: managerComment,
+        webhookResponse: webhookData,
+      },
+      { upsert: true, new: true }
+    );
 
     // 3. Update file with status and webhook response
     await drive.files.update({

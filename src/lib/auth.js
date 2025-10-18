@@ -42,7 +42,7 @@ export const authOptions = {
             access_type: "offline",
             prompt: "consent",
             scope:
-                "openid email profile https://www.googleapis.com/auth/drive.readonly",
+                "openid email profile https://www.googleapis.com/auth/drive.meet.readonly https://www.googleapis.com/auth/drive.metadata",
             },
         },
     })

@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth"
 import { NextResponse } from "next/server";
 import mammoth from "mammoth";
+import dbConnect from "@/lib/dbConnect";
+import Candidate from "@/lib/models/Candidate";
 
 async function getFileContent(drive, fileId, mimeType) {
   let buffer;
@@ -92,20 +94,15 @@ export async function GET(request, context) {
 
     const parsedData = parseFileContent(content, fileMetadata.data.name);
 
-    let webhookResponse = null;
-    if (fileMetadata.data.appProperties?.webhookResponse) {
-        try {
-            webhookResponse = JSON.parse(fileMetadata.data.appProperties.webhookResponse);
-        } catch (e) {
-            console.error("Failed to parse webhookResponse", e);
-        }
-    }
+    await dbConnect();
+    const candidate = await Candidate.findOne({ fileId: fileId });
 
     const response = {
       id: fileId,
       ...fileMetadata.data,
       status: fileMetadata.data.appProperties?.status || 'pending',
-      webhookResponse: webhookResponse,
+      webhookResponse: candidate?.webhookResponse || null,
+      managerComment: candidate?.managerComment || '',
       ...parsedData,
     };
 
