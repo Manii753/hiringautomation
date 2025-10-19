@@ -1,6 +1,6 @@
 import { google } from "googleapis";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth"
+import { authOptions } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import mammoth from "mammoth";
 import dbConnect from "@/lib/dbConnect";
@@ -12,16 +12,14 @@ async function getFileContent(drive, fileId, mimeType) {
     const response = await drive.files.export(
       {
         fileId,
-        mimeType:
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",    
-            
+        mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       },
       { responseType: "arraybuffer" }
     );
     buffer = Buffer.from(response.data);
   } else {
     const response = await drive.files.get(
-      { fileId, alt: "media", supportsAllDrives: true},
+      { fileId, alt: "media", supportsAllDrives: true },
       { responseType: "arraybuffer" }
     );
     buffer = Buffer.from(response.data);
@@ -29,8 +27,7 @@ async function getFileContent(drive, fileId, mimeType) {
 
   if (
     mimeType === "application/vnd.google-apps.document" ||
-    mimeType ===
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
   ) {
     const result = await mammoth.extractRawText({ buffer });
     return result.value;
@@ -62,12 +59,12 @@ function parseFileContent(content, fileName = "") {
     interviewDate,
     interviewTime,
     summary: summaryMatch ? summaryMatch[1].trim() : "No summary found.",
-    content: content,
+    content,
   };
 }
 
 export async function GET(request, context) {
-  const { params } = context; // ✅ no await here
+  const { params } = context;
   const fileId = params.id;
 
   const session = await getServerSession(authOptions);
@@ -81,38 +78,70 @@ export async function GET(request, context) {
   const drive = google.drive({ version: "v3", auth: oauth2Client });
 
   try {
+    // 1️⃣ Get the target file (Notes by Gemini)
     const fileMetadata = await drive.files.get({
       fileId,
       fields: "name,createdTime,mimeType,appProperties",
       supportsAllDrives: true,
     });
 
-    const content = await getFileContent(
-      drive,
-      fileId,
-      fileMetadata.data.mimeType
-    );
-
+    // 2️⃣ Get file content and parse it
+    const content = await getFileContent(drive, fileId, fileMetadata.data.mimeType);
     const parsedData = parseFileContent(content, fileMetadata.data.name);
 
+    // 3️⃣ Find "Meet Recordings" folder ID
+    const folderName = "Meet Recordings";
+    const folderRes = await drive.files.list({
+      q: `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`,
+      fields: "files(id, name)",
+      supportsAllDrives: true,
+      includeItemsFromAllDrives: true,
+    });
+
+    if (!folderRes.data.files.length) {
+      console.warn(`⚠️ Folder "${folderName}" not found.`);
+    }
+
+    const folderId = folderRes.data.files[0]?.id;
+
+    // 4️⃣ Search for matching recording only inside that folder
+    const baseName = fileMetadata.data.name.replace(/ - Notes by Gemini/i, "").trim();
+
+    let matchingRecording = null;
+
+    if (folderId) {
+      const recordingSearch = await drive.files.list({
+        q: `'${folderId}' in parents and name contains '${baseName}' and name contains 'Recording' and trashed=false`,
+        fields: "files(id, name, mimeType)",
+        supportsAllDrives: true,
+        includeItemsFromAllDrives: true,
+      });
+
+      matchingRecording = recordingSearch.data.files?.[0] || null;
+    }
+
+    // 5️⃣ Fetch Candidate data from DB
     await dbConnect();
     const candidate = await Candidate.findOne({ fileId });
 
+    // 6️⃣ Prepare final response
     const response = {
       id: fileId,
       ...fileMetadata.data,
-      status: fileMetadata.data.appProperties?.status || 'pending',
+      status: fileMetadata.data.appProperties?.status || "pending",
       webhookResponse: candidate?.webhookResponse || null,
-      managerComment: candidate?.managerComment || '',
+      managerComment: candidate?.managerComment || "",
       ...parsedData,
+      recordingId: matchingRecording ? matchingRecording.id : null,
+      recordingName: matchingRecording ? matchingRecording.name : null,
+      recordingLink: matchingRecording
+        ? `https://drive.google.com/file/d/${matchingRecording.id}/view`
+        : null,
     };
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error(
-      `❌ Error fetching file ${fileId} from Google Drive:`,
-      JSON.stringify(error, null, 2)
-    );
+    console.error(`❌ Error fetching file ${fileId} from Google Drive:`, JSON.stringify(error, null, 2));
     return NextResponse.json(
       {
         error: `Error fetching file ${fileId} from Google Drive`,
@@ -122,4 +151,3 @@ export async function GET(request, context) {
     );
   }
 }
-

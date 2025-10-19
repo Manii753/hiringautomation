@@ -50,6 +50,7 @@ const CandidateDetailPage = () => {
       if (data.managerComment) {
         setManagerComment(data.managerComment);
       }
+      
       setLoading(false);
     } catch (err) {
       setLoading(false);
