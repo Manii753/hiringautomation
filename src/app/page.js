@@ -75,11 +75,6 @@ const CandidateList = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Candidates</h1>
-        <p className="text-gray-500 mt-2">Review and manage interview candidates</p>
-      </div>
-
       <div className="flex items-center justify-between">
         <Input
           placeholder="Search by name..."
@@ -87,20 +82,22 @@ const CandidateList = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm"
         />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">Filter by Status</Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuLabel>Status</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => setStatusFilter("all")}>All</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setStatusFilter("pending")}>Pending</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setStatusFilter("pass")}>Pass</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setStatusFilter("fail")}>Fail</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <DatePickerDemo date={date} setDate={setDate} />
+        <div className="flex items-center space-x-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">Filter by Status</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuLabel>Status</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setStatusFilter("all")}>All</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setStatusFilter("pending")}>Pending</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setStatusFilter("pass")}>Pass</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setStatusFilter("fail")}>Fail</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DatePickerDemo date={date} setDate={setDate} />
+        </div>
       </div>
 
       <Card>
@@ -113,6 +110,7 @@ const CandidateList = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Interview Date</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Owner</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -143,8 +141,8 @@ const CandidateList = () => {
 
                       <td className="px-6 py-4 whitespace-nowrap">
                         <Badge
-                          variant={status === "pass" ? "default" : status === "fail" ? "destructive" : "secondary"}
-                          className={`text-center cursor-none font-medium px-3 py-1 ${status === "pass" ? "bg-green-500" : ""}`}>
+                          variant={status === "pass" ? "green" : status === "fail" ? "destructive" : "secondary"}
+                          className={`text-center cursor-none font-medium px-3 py-1`}>
                           {status.charAt(0).toUpperCase() + status.slice(1)}
                         </Badge>
                       </td>
@@ -197,23 +195,22 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold">Hiring Manager Dashboard</h1>
-              <p className="text-lg text-gray-500">{session.user.name}</p>
-            
+              <h1 className="text-xl font-semibold">Hiring Manager Dashboard</h1>
+              <p className="text-xs text-gray-500 mt-1">Powered by n8n Automation</p>
             </div>
             <div className="flex items-center space-x-4">
+              <p className="text-sm font-medium">{session.user.name}</p>
               <img src={session.user.image} alt="Profile" className="w-8 h-8 rounded-full" />
               <Button variant="outline" onClick={() => signOut({ callbackUrl: '/login' })}>Logout</Button>
             </div>
-            
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <CandidateList />
       </main>
     </div>

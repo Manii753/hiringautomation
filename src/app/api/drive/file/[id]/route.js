@@ -67,7 +67,7 @@ function parseFileContent(content, fileName = "") {
 }
 
 export async function GET(request, context) {
-  const { params } = await context;
+  const { params } = context; // ✅ no await here
   const fileId = params.id;
 
   const session = await getServerSession(authOptions);
@@ -96,7 +96,7 @@ export async function GET(request, context) {
     const parsedData = parseFileContent(content, fileMetadata.data.name);
 
     await dbConnect();
-    const candidate = await Candidate.findOne({ fileId: fileId });
+    const candidate = await Candidate.findOne({ fileId });
 
     const response = {
       id: fileId,
@@ -122,3 +122,4 @@ export async function GET(request, context) {
     );
   }
 }
+

@@ -11,7 +11,10 @@ const UserSchema = new mongoose.Schema({
     unique: true,
   },
   image: String,
-  emailVerified: Date,
+  slackAccessToken: String, 
+  slackUserId: String,
+  slackTeamId: String,
+  slackChannel: String, 
 }, {
   timestamps: true,
 });
