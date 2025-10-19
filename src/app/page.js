@@ -9,6 +9,11 @@ import { Loader2 } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -42,6 +47,7 @@ const CandidateList = () => {
       const data = await response.json();
       setCandidates(data);
       setLoading(false);
+      
     } catch (err) {
       setLoading(false);
     }
@@ -105,6 +111,7 @@ const CandidateList = () => {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Interview Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Owner</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 </tr>
               </thead>
@@ -125,13 +132,23 @@ const CandidateList = () => {
                         {new Date(candidate.createdTime).toLocaleDateString()}
                       </td>
 
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-600 cursor-pointer">
+                        <Tooltip>
+                          <TooltipTrigger>{candidate.owners?.[0]?.displayName}</TooltipTrigger>
+                          <TooltipContent>
+                            <p>{candidate.owners?.[0]?.emailAddress}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </td>
+
                       <td className="px-6 py-4 whitespace-nowrap">
                         <Badge
                           variant={status === "pass" ? "default" : status === "fail" ? "destructive" : "secondary"}
-                          className={`text-center font-medium px-3 py-1 ${status === "pass" ? "bg-green-500" : ""}`}>
+                          className={`text-center cursor-none font-medium px-3 py-1 ${status === "pass" ? "bg-green-500" : ""}`}>
                           {status.charAt(0).toUpperCase() + status.slice(1)}
                         </Badge>
                       </td>
+                      
 
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <Button

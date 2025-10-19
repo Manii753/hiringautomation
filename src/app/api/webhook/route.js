@@ -46,11 +46,9 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Failed to get response from webhook' }, { status: 502 });
     }
 
-    console.log('Webhook response:', webhookResponse);
+    
 
     const webhookData = await webhookResponse.json();
-
-    console.log('Webhook response data:', webhookData);
 
     await dbConnect();
 

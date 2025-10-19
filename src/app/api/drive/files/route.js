@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
-  console.log("DRIVE SESSION",session)
+ 
 
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -41,7 +41,7 @@ export async function GET() {
             or mimeType='text/plain') 
           and name contains 'interview'
           and name contains 'notes by gemini'`,
-      fields: 'files(id, name, mimeType, createdTime,appProperties)',
+      fields: 'files(id, name, mimeType, createdTime, appProperties, owners(displayName, emailAddress) )',
     });
 
 

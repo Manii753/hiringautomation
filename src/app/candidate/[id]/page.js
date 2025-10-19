@@ -17,7 +17,7 @@ const CandidateDetailPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [managerComment, setManagerComment] = useState('');
   const [webhookResponse, setWebhookResponse] = useState(null);
-  
+  const [isSendingToSlack, setIsSendingToSlack] = useState(false);
   
 
   function CandidateSummary({ data }) {
@@ -63,8 +63,6 @@ const CandidateDetailPage = () => {
         setManagerComment(data.managerComment);
       }
       setLoading(false);
-      console.log(candidate);
-      console.log(data);
     } catch (err) {
       setLoading(false);
     }
@@ -104,6 +102,32 @@ const CandidateDetailPage = () => {
       console.error('Error submitting candidate status:', error);
     }
     setIsSubmitting(false);
+  };
+
+  const handleSendToSlack = async () => {
+    setIsSendingToSlack(true);
+    try {
+      // TODO: Replace with your n8n Slack webhook URL
+      
+      const response = await fetch('https://autoscalev.app.n8n.cloud/webhook-test/8875d6ed-3bbb-49a7-b16e-9740f161a395', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({webhookResponse, candidate}),
+      });
+
+      if (response.ok) {
+        alert('Successfully sent to Slack!');
+      } else {
+        alert('Failed to send to Slack.');
+        console.error('Failed to send to Slack');
+      }
+    } catch (error) {
+      alert('Failed to send to Slack.');
+      console.error('Error sending to Slack:', error);
+    }
+    setIsSendingToSlack(false);
   };
 
   if (loading) {
@@ -225,6 +249,14 @@ const CandidateDetailPage = () => {
                             <p className="text-gray-600">{value}</p>
                           </div>
                         ))}
+                        <Button
+                            onClick={handleSendToSlack}
+                            disabled={isSendingToSlack}
+                            className="w-full mt-4"
+                        >
+                            {isSendingToSlack ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Send to Slack
+                        </Button>
                       </CardContent>
                     </Card>
                   )}

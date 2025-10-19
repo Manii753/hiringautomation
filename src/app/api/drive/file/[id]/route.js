@@ -13,14 +13,15 @@ async function getFileContent(drive, fileId, mimeType) {
       {
         fileId,
         mimeType:
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",        
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",    
+            
       },
       { responseType: "arraybuffer" }
     );
     buffer = Buffer.from(response.data);
   } else {
     const response = await drive.files.get(
-      { fileId, alt: "media", supportsAllDrives: true },
+      { fileId, alt: "media", supportsAllDrives: true},
       { responseType: "arraybuffer" }
     );
     buffer = Buffer.from(response.data);
