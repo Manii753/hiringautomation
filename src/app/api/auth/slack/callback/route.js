@@ -12,6 +12,8 @@ export async function GET(request) {
 
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
+  const candidateId = url.searchParams.get('state');
+
 
   if (!code) {
     return NextResponse.json({ error: 'Missing authorization code' }, { status: 400 });
@@ -32,10 +34,12 @@ export async function GET(request) {
         client_id: clientId,
         client_secret: clientSecret,
         redirect_uri: redirectUri,
+
       }),
     });
 
     const data = await response.json();
+    console.log('Slack OAuth response:', data);
 
     if (!data.ok) {
       console.error('Slack OAuth error:', data.error);
@@ -43,7 +47,7 @@ export async function GET(request) {
     }
 
     const { authed_user, team } = data;
-    const access_token = authed_user.access_token;
+    const access_token = data.access_token || (authed_user && authed_user.access_token);
 
 
     await dbConnect();
@@ -57,8 +61,11 @@ export async function GET(request) {
       { new: true, upsert: true }
     );
 
+    const baseUrl = process.env.NEXTAUTH_URL
+    const redirectUrl = `${baseUrl}/candidate/${candidateId}`;
+
     // Redirect user to the candidate page or a success page
-    return NextResponse.redirect('/?slack_connected=true');
+    return NextResponse.redirect(redirectUrl);
 
   } catch (error) {
     console.error('Error during Slack OAuth callback:', error);

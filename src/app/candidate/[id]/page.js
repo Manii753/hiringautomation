@@ -2,54 +2,42 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from "@/components/ui/badge"
+import { Badge } from "@/components/ui/badge";
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { ArrowLeft,  Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 const CandidateDetailPage = () => {
   const params = useParams();
   const candidateId = params.id;
+  const { data: session } = useSession();
+  const [user, setUser] = useState(null);
   const [candidate, setCandidate] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [managerComment, setManagerComment] = useState('');
   const [webhookResponse, setWebhookResponse] = useState(null);
   const [isSendingToSlack, setIsSendingToSlack] = useState(false);
-  
+  const [slackChannel, setSlackChannel] = useState('');
 
-  function CandidateSummary({ data }) {
-    const formatValue = (value) => {
-      if (Array.isArray(value)) {
-        return value.join(" "); // join all array items into one paragraph
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (session) {
+        const response = await fetch('/api/user');
+        const userData = await response.json();
+        setUser(userData);
+        if (userData.slackChannel) {
+          setSlackChannel(userData.slackChannel);
+        }
       }
-      if (typeof value === "object" && value !== null) {
-        return JSON.stringify(value); // fallback for nested objects
-      }
-      return value?.toString() || "";
     };
+    fetchUser();
+  }, [session]);
 
-    return (
-      <Card className="max-w-3xl mx-auto shadow-sm border rounded-2xl">
-        <CardHeader>
-          <CardTitle className="text-xl font-semibold text-gray-800">
-            Candidate Analysis
-          </CardTitle>
-        </CardHeader>
-
-        <CardContent className="space-y-4 text-gray-700 leading-relaxed">
-          {Object.entries(data).map(([key, value]) => (
-            <p key={key}>
-              <span className="font-semibold capitalize">{key}:</span>{" "}
-              {formatValue(value)}
-            </p>
-          ))}
-        </CardContent>
-      </Card>
-    );
-  }
   const fetchCandidateDetail = async () => {
     try {
       setLoading(true);
@@ -107,20 +95,19 @@ const CandidateDetailPage = () => {
   const handleSendToSlack = async () => {
     setIsSendingToSlack(true);
     try {
-      // TODO: Replace with your n8n Slack webhook URL
-      
-      const response = await fetch('https://autoscalev.app.n8n.cloud/webhook-test/8875d6ed-3bbb-49a7-b16e-9740f161a395', {
+      const response = await fetch('/api/slack/send-message', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({webhookResponse, candidate}),
+        body: JSON.stringify({ webhookResponse, channel: slackChannel }),
       });
 
       if (response.ok) {
         alert('Successfully sent to Slack!');
       } else {
-        alert('Failed to send to Slack.');
+        const errorData = await response.json();
+        alert(`Failed to send to Slack: ${errorData.error}`);
         console.error('Failed to send to Slack');
       }
     } catch (error) {
@@ -130,7 +117,8 @@ const CandidateDetailPage = () => {
     setIsSendingToSlack(false);
   };
 
-  if (loading) {
+  if (loading || !user) {
+
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
@@ -155,9 +143,16 @@ const CandidateDetailPage = () => {
               <h1 className="text-xl font-semibold">Hiring Manager Dashboard</h1>
               <p className="text-xs text-gray-500 mt-1">Powered by n8n Automation</p>
             </div>
-            <Link href="/">
-                <Button variant="outline">Back to list</Button>
-            </Link>
+            <div className="flex items-center space-x-4">
+              {!user.slackAccessToken && (
+                <Button asChild>
+                  <a href={`/api/auth/slack?candidateId=${candidateId}`}>Connect to Slack</a>
+                </Button>
+              )}
+              <Link href="/">
+                  <Button variant="outline">Back to list</Button>
+              </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -249,14 +244,23 @@ const CandidateDetailPage = () => {
                             <p className="text-gray-600">{value}</p>
                           </div>
                         ))}
-                        <Button
-                            onClick={handleSendToSlack}
-                            disabled={isSendingToSlack}
-                            className="w-full mt-4"
-                        >
-                            {isSendingToSlack ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                            Send to Slack
-                        </Button>
+                        <div className="space-y-2">
+                          <Input
+                            type="text"
+                            placeholder="Enter Slack channel (e.g., #general)"
+                            value={slackChannel}
+                            onChange={(e) => setSlackChannel(e.target.value)}
+                            disabled={!user.slackAccessToken}
+                          />
+                          <Button
+                              onClick={handleSendToSlack}
+                              disabled={isSendingToSlack || !slackChannel || !user.slackAccessToken}
+                              className="w-full mt-4"
+                          >
+                              {isSendingToSlack ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                              Send to Slack
+                          </Button>
+                        </div>
                       </CardContent>
                     </Card>
                   )}
