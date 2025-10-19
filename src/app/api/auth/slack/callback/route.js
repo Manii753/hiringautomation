@@ -39,7 +39,7 @@ export async function GET(request) {
     });
 
     const data = await response.json();
-    console.log('Slack OAuth response:', data);
+    
 
     if (!data.ok) {
       console.error('Slack OAuth error:', data.error);
@@ -47,7 +47,7 @@ export async function GET(request) {
     }
 
     const { authed_user, team } = data;
-    const access_token = data.access_token || (authed_user && authed_user.access_token);
+    const access_token = data.authed_user.access_token;
 
 
     await dbConnect();

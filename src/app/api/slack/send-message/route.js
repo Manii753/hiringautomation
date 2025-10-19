@@ -11,55 +11,43 @@ export async function POST(request) {
   }
 
   await dbConnect();
+
+
   const user = await User.findOne({ email: session.user.email });
+  
 
   if (!user || !user.slackAccessToken) {
     return NextResponse.json({ error: 'Slack not connected' }, { status: 400 });
   }
 
-  const { webhookResponse, channel } = await request.json();
+  const data = await request.json();
 
-  if (!webhookResponse) {
+  console.log(data);
+
+  if (!data) {
     return NextResponse.json({ error: 'Missing webhookResponse' }, { status: 400 });
   }
 
   try {
-    const response = await fetch('https://slack.com/api/chat.postMessage', {
+    const response = await fetch(process.env.N8N_SLACK_WEBHOOK_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${user.slackAccessToken}`,
       },
       body: JSON.stringify({
-        channel: channel || user.slackChannel || 'general', // Fallback to 'general'
-        text: 'Webhook Response',
-        blocks: [
-          {
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: '*AI Evaluation Summary*',
-            },
-          },
-          {
-            type: 'divider',
-          },
-          ...Object.entries(webhookResponse).map(([key, value]) => ({
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: `*${key}:*\n${value}`,
-            },
-          })),
-        ],
+        token: user.slackAccessToken,
+        channel: 'all-new-workspace', 
+        data,
+        
       }),
     });
 
-    const data = await response.json();
+    
 
-    if (!data.ok) {
-      console.error('Slack API error:', data.error);
-      return NextResponse.json({ error: `Slack API error: ${data.error}` }, { status: 500 });
+    if (!response.ok) {
+      // Log n8n error, but don't fail the whole request
+      console.error('Failed to send data to n8n webhook:', await response.text());
+      return NextResponse.json({ error: 'Failed to get response from webhook' }, { status: 502 });
     }
 
     return NextResponse.json({ success: true });

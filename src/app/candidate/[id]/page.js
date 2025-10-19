@@ -100,7 +100,7 @@ const CandidateDetailPage = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ webhookResponse, channel: slackChannel }),
+        body: JSON.stringify({ webhookResponse, candidate , candidateId  }),
       });
 
       if (response.ok) {
@@ -245,16 +245,10 @@ const CandidateDetailPage = () => {
                           </div>
                         ))}
                         <div className="space-y-2">
-                          <Input
-                            type="text"
-                            placeholder="Enter Slack channel (e.g., #general)"
-                            value={slackChannel}
-                            onChange={(e) => setSlackChannel(e.target.value)}
-                            disabled={!user.slackAccessToken}
-                          />
+                          
                           <Button
                               onClick={handleSendToSlack}
-                              disabled={isSendingToSlack || !slackChannel || !user.slackAccessToken}
+                              disabled={isSendingToSlack || !user.slackAccessToken}
                               className="w-full mt-4"
                           >
                               {isSendingToSlack ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
