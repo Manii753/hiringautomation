@@ -1,16 +1,19 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { RefreshCcw } from 'lucide-react';
+import { Button } from './ui/button';
 
 const CandidateListSkeleton = () => {
   return (
     <div className="space-y-6">
       {/* Search and Filter Controls Skeleton */}
       <div className="flex items-center justify-between">
-        <Skeleton className="h-10 w-80" />
+        <Skeleton className="h-9 w-95" />
         <div className="flex items-center space-x-2">
-          <Skeleton className="h-10 w-40" />
-          <Skeleton className="h-10 w-40" />
-          <Skeleton className="h-10 w-40" />
+          <Skeleton className="h-9 w-33" />
+          <Skeleton className="h-9 w-33" />
+          <Skeleton className="h-9 w-70" />
+          <Button variant="outline"><RefreshCcw className="animate-spin" /></Button>
         </div>
       </div>
 

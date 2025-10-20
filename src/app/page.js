@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, ArrowUp, ArrowDown } from 'lucide-react';
+import { Loader2, ArrowUp, ArrowDown, RefreshCw } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { RefreshIcon } from '@/components/ui/icons/il-refresh';
 import CandidateListSkeleton from "@/components/Skelton";
 import {
   Tooltip,
@@ -160,6 +161,23 @@ const CandidateList = () => {
             </DropdownMenuContent>
           </DropdownMenu>
           <DatePickerDemo date={date} setDate={setDate} />
+          <Button
+            variant="outline"
+            onClick={() => fetchCandidates(true)}
+            disabled={loading}
+            className="flex items-center"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" /> Refreshing...
+              </>
+            ) : (
+              <>
+                <RefreshCw  /> 
+              </>
+            )}
+          </Button>
+
         </div>
       </div>
 

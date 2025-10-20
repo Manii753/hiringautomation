@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft,  Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import CandidateDetailSkeleton from '@/components/candidateSkelton';
 
 const CandidateDetailPage = () => {
   const params = useParams();
@@ -120,19 +121,11 @@ const CandidateDetailPage = () => {
 
   if (loading || !user) {
 
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-      </div>
-    );
+    return <CandidateDetailSkeleton />;
   }
 
-  if (!candidate) {
-      return (
-        <div className="flex items-center justify-center h-screen">
-            <p>Candidate not found.</p>
-        </div>
-      )
+  if (loading || !candidate) {
+      return <CandidateDetailSkeleton />
   };
 
   return (
@@ -150,9 +143,7 @@ const CandidateDetailPage = () => {
                   <a href={`/api/auth/slack?candidateId=${candidateId}`}>Connect to Slack</a>
                 </Button>
               )}
-              <Link href="/">
-                  <Button variant="outline">Back to list</Button>
-              </Link>
+            
             </div>
           </div>
         </div>
@@ -209,21 +200,22 @@ const CandidateDetailPage = () => {
                                 onChange={(e) => setManagerComment(e.target.value)}
                                 className="min-h-[150px]"
                             />
-                            <div className="space-x-2 space-y-2" style={{display: webhookResponse ? 'none' : 'flex'}}>
+                            <div className="space-x-2 space-y-2 flex flex-row " style={{display: webhookResponse ? 'none' : 'flex flex-row'}}>
                                 <Button 
                                     onClick={() => handleStatusChange('pass')} 
                                     disabled={isSubmitting || candidate.status === 'pass'}
-                                    variant={candidate.status === 'pass' ? 'default' : 'outline'}
-                                    className="w-full"
+                                    variant={candidate.status === 'pass' ? 'green' : 'green'}
+                                    className="flex-1" 
                                 >
                                     {isSubmitting === 'pass' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                     Pass
                                 </Button>
                                 <Button 
                                     onClick={() => handleStatusChange('fail')} 
+                                    
                                     disabled={isSubmitting || candidate.status === 'fail'}
-                                    variant={candidate.status === 'fail' ? 'destructive' : 'outline'}
-                                    className="w-full"
+                                    variant={candidate.status === 'fail' ? 'destructive' : 'red'}
+                                    className="flex-1"
                                 >
                                     {isSubmitting === 'fail' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                     Fail
