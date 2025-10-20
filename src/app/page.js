@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowUp, ArrowDown } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import CandidateListSkeleton from "@/components/Skelton";
 import {
   Tooltip,
   TooltipContent,
@@ -28,12 +29,26 @@ const CandidateList = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [ownerFilter, setOwnerFilter] = useState("all");
+  const [owners, setOwners] = useState([]);
   const [date, setDate] = useState(null);
+  const [sortConfig, setSortConfig] = useState({ key: 'createdTime', direction: 'descending' });
   const router = useRouter();
 
   useEffect(() => {
     fetchCandidates();
   }, []);
+
+  useEffect(() => {
+    const allOwners = candidates.reduce((acc, candidate) => {
+      const ownerName = candidate.owners?.[0]?.displayName;
+      if (ownerName && !acc.includes(ownerName)) {
+        acc.push(ownerName);
+      }
+      return acc;
+    }, []);
+    setOwners(allOwners);
+  }, [candidates]);
 
   function extractNameFromFileName(fileName) {
     const match = fileName.match(/Interview\s*\(([^)]+)\)/i);
@@ -47,30 +62,63 @@ const CandidateList = () => {
       const data = await response.json();
       setCandidates(data);
       setLoading(false);
-      
+      console.log(data);
     } catch (err) {
       setLoading(false);
     }
+  };
+
+  const requestSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
   };
 
   const filteredCandidates = candidates.filter(candidate => {
     const name = extractNameFromFileName(candidate.name).toLowerCase();
     const status = candidate.appProperties?.status || "pending";
     const createdDate = new Date(candidate.createdTime);
+    const owner = candidate.owners?.[0]?.displayName;
     return (
       (name.includes(searchTerm.toLowerCase())) &&
       (statusFilter === "all" || status === statusFilter) &&
+      (ownerFilter === "all" || owner === ownerFilter) &&
       (!date || createdDate.toDateString() === date.toDateString())
     );
   });
 
+  const sortedCandidates = React.useMemo(() => {
+    let sortableItems = [...filteredCandidates];
+    if (sortConfig.key) {
+      sortableItems.sort((a, b) => {
+        let aValue;
+        let bValue;
+
+        if (sortConfig.key === 'owner') {
+          aValue = a.owners?.[0]?.displayName || '';
+          bValue = b.owners?.[0]?.displayName || '';
+        } else {
+          aValue = a[sortConfig.key];
+          bValue = b[sortConfig.key];
+        }
+
+        if (aValue < bValue) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [filteredCandidates, sortConfig]);
+
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-        <p className="ml-4 text-gray-500">Fetching from Drive...</p>
-      </div>
-    );
+    return  <CandidateListSkeleton />;
+    
   }
 
   return (
@@ -96,6 +144,21 @@ const CandidateList = () => {
               <DropdownMenuItem onClick={() => setStatusFilter("fail")}>Fail</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">Filter by Owner</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuLabel>Owner</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setOwnerFilter("all")}>All</DropdownMenuItem>
+              {owners.map(owner => (
+                <DropdownMenuItem key={owner} onClick={() => setOwnerFilter(owner)}>
+                  {owner}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <DatePickerDemo date={date} setDate={setDate} />
         </div>
       </div>
@@ -107,14 +170,21 @@ const CandidateList = () => {
               <thead className="bg-gray-50 border-b">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Interview Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Owner</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => requestSort('createdTime')}>
+                    <div className="flex items-center">
+                      Interview Date
+                      {sortConfig.key === 'createdTime' && (sortConfig.direction === 'ascending' ? <ArrowUp className="h-4 w-4 ml-1" /> : <ArrowDown className="h-4 w-4 ml-1" />)}
+                    </div>
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Owner
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredCandidates.map((candidate) => {
+                {sortedCandidates.map((candidate) => {
                   const status = candidate.appProperties?.status || "pending";
 
                   return (

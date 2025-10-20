@@ -24,28 +24,47 @@ export async function GET() {
       fields: 'files(id, name)',
     })
 
+    
+
     if (!folderRes.data.files.length) {
       console.log("folder not found")
       return NextResponse.json({ error: `Folder "${folderName}" not found.` }, { status: 404 })
     }
 
-    const folderId = folderRes.data.files[0].id
+    
 
-    // 2️⃣ Get all files inside that folder
-    const filesRes = await drive.files.list({
-      q: `'${folderId}' in parents 
-          and trashed=false 
-          and (mimeType='application/pdf' 
-            or mimeType='application/vnd.google-apps.document' 
-            or mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
-            or mimeType='text/plain') 
-          and name contains 'interview'
-          and name contains 'notes by gemini'`,
-      fields: 'files(id, name, mimeType, createdTime, appProperties, owners(displayName, emailAddress) )',
+    // Replace the for loop with Promise.all
+    const allFilesPromises = folderRes.data.files.map(async (folder) => {
+      const folderId = folder.id;
+      let folderFiles = [];
+      let pageToken = null;
+      
+      do {
+        const filesRes = await drive.files.list({
+          q: `'${folderId}' in parents 
+              and trashed=false 
+              and (mimeType='application/pdf' 
+                or mimeType='application/vnd.google-apps.document' 
+                or mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+                or mimeType='text/plain') 
+              and name contains 'interview'
+              and name contains 'notes by gemini'`,
+          pageSize: 100,
+          fields: 'nextPageToken, files(id, name, mimeType, createdTime, appProperties, owners(displayName, emailAddress))',
+          pageToken: pageToken || undefined,
+        });
+        
+        folderFiles = folderFiles.concat(filesRes.data.files);
+        pageToken = filesRes.data.nextPageToken;
+      } while (pageToken);
+      
+      return folderFiles;
     });
 
+    const allFilesArrays = await Promise.all(allFilesPromises);
+    const allFiles = allFilesArrays.flat();
 
-    return NextResponse.json(filesRes.data.files)
+  return NextResponse.json(allFiles);
   } catch (error) {
     console.error('Error fetching files from Google Drive:', error)
     return NextResponse.json({ error: 'Error fetching files from Google Drive' }, { status: 500 })
