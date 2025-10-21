@@ -15,12 +15,6 @@ const CandidateDetailSkeleton = () => {
               <h1 className="text-xl font-semibold">Hiring Manager Dashboard</h1>
               <p className="text-xs text-gray-500 mt-1">Powered by n8n Automation</p>
             </div>
-            <div className="flex items-center space-x-4">
-              <Skeleton className="h-10 w-32" />
-              <Link href="/">
-                <Button variant="outline">Back to list</Button>
-              </Link>
-            </div>
           </div>
         </div>
       </header>
