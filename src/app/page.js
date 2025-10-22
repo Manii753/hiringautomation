@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Loader2, ArrowUp, ArrowDown, RefreshCw } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { RefreshIcon } from '@/components/ui/icons/il-refresh';
+import { ScrollArea } from "@/components/ui/scroll-area";
+
 import CandidateListSkeleton from "@/components/Skelton";
 import {
   Tooltip,
@@ -123,7 +124,7 @@ const CandidateList = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className=" space-y-6">
       <div className="flex items-center justify-between">
         <Input
           placeholder="Search by name..."
@@ -181,11 +182,11 @@ const CandidateList = () => {
         </div>
       </div>
 
-      <Card>
+      <Card >
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b">
+          <ScrollArea className="h-[calc(100vh-260px)] w-full overflow-x-auto">
+            <table className=" w-full">
+              <thead className="bg-gray-50 border-b sticky top-0">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => requestSort('createdTime')}>
@@ -201,57 +202,57 @@ const CandidateList = () => {
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {sortedCandidates.map((candidate) => {
-                  const status = candidate.appProperties?.status || "pending";
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {sortedCandidates.map((candidate) => {
+                    const status = candidate.appProperties?.status || "pending";
 
-                  return (
-                    <tr
-                      key={candidate.id}
-                      className="hover:bg-gray-50 transition-colors"
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
-                        {extractNameFromFileName(candidate.name)}
-                      </td>
+                    return (
+                      <tr
+                        key={candidate.id}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
+                          {extractNameFromFileName(candidate.name)}
+                        </td>
 
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                        {new Date(candidate.createdTime).toLocaleDateString()}
-                      </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                          {new Date(candidate.createdTime).toLocaleDateString()}
+                        </td>
 
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-600 cursor-pointer">
-                        <Tooltip>
-                          <TooltipTrigger>{candidate.owners?.[0]?.displayName}</TooltipTrigger>
-                          <TooltipContent>
-                            <p>{candidate.owners?.[0]?.emailAddress}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-gray-600 cursor-pointer">
+                          <Tooltip>
+                            <TooltipTrigger>{candidate.owners?.[0]?.displayName}</TooltipTrigger>
+                            <TooltipContent>
+                              <p>{candidate.owners?.[0]?.emailAddress}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </td>
 
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge
-                          variant={status === "pass" ? "green" : status === "fail" ? "destructive" : "secondary"}
-                          className={`text-center cursor-none font-medium px-3 py-1`}>
-                          {status.charAt(0).toUpperCase() + status.slice(1)}
-                        </Badge>
-                      </td>
-                      
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <Badge
+                            variant={status === "pass" ? "green" : status === "fail" ? "destructive" : "secondary"}
+                            className={`text-center cursor-none font-medium px-3 py-1`}>
+                            {status.charAt(0).toUpperCase() + status.slice(1)}
+                          </Badge>
+                        </td>
+                        
 
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => router.push(`/candidate/${candidate.id}`)}
-                        >
-                          View Details
-                        </Button>
-                      </td>
-                    </tr>
-                  );
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => router.push(`/candidate/${candidate.id}`)}
+                          >
+                            View Details
+                          </Button>
+                        </td>
+                      </tr>
+                    );
 
-                })}
-              </tbody>
+                  })}
+                </tbody>
             </table>
-          </div>
+          </ScrollArea>
         </CardContent>
       </Card>
     </div>
@@ -281,23 +282,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-semibold">Hiring Manager Dashboard</h1>
-              <p className="text-xs text-gray-500 mt-1">Powered by n8n Automation</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <p className="text-sm font-medium">{session.user.name}</p>
-              <img src={session.user.image} alt="Profile" className="w-8 h-8 rounded-full" />
-              <Button variant="outline" onClick={() => signOut({ callbackUrl: '/login' })}>Logout</Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
+    <div className="h-full bg-gray-50">
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <CandidateList />
       </main>

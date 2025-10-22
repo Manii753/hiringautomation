@@ -2,10 +2,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RefreshCcw } from 'lucide-react';
 import { Button } from './ui/button';
+import { ScrollArea } from './ui/scroll-area';
 
 const CandidateListSkeleton = () => {
   return (
-    <div className="space-y-6">
+    <div className="h-full space-y-6">
       {/* Search and Filter Controls Skeleton */}
       <div className="flex items-center justify-between">
         <Skeleton className="h-9 w-95" />
@@ -20,6 +21,7 @@ const CandidateListSkeleton = () => {
       {/* Table Skeleton */}
       <Card>
         <CardContent className="p-0">
+          <ScrollArea className="h-[calc(100vh-260px)] w-full overflow-x-auto">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 border-b">
@@ -54,6 +56,7 @@ const CandidateListSkeleton = () => {
               </tbody>
             </table>
           </div>
+          </ScrollArea>
         </CardContent>
       </Card>
     </div>
