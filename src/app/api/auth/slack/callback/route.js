@@ -63,7 +63,7 @@ export async function GET(request) {
     );
 
     const baseUrl = process.env.NEXTAUTH_URL
-    const redirectUrl = `${baseUrl}/candidate/${candidateId}`;
+    const redirectUrl = candidateId === 'home' ? `${baseUrl}/` : `${baseUrl}/candidate/${candidateId}`;
 
     // Redirect user to the candidate page or a success page
     return NextResponse.redirect(redirectUrl);

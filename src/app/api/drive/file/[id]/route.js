@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import mammoth from "mammoth";
 import dbConnect from "@/lib/dbConnect";
 import Candidate from "@/lib/models/Candidate";
+import { file } from "googleapis/build/src/apis/file";
 
 async function getFileContent(drive, fileId, mimeType) {
   let buffer;
@@ -81,28 +82,18 @@ export async function GET(request, context) {
     // 1️⃣ Get the target file (Notes by Gemini)
     const fileMetadata = await drive.files.get({
       fileId,
-      fields: "name,createdTime,mimeType,appProperties",
+      fields: "name,createdTime,mimeType,appProperties,parents",
       supportsAllDrives: true,
     });
+
+    
 
     // 2️⃣ Get file content and parse it
     const content = await getFileContent(drive, fileId, fileMetadata.data.mimeType);
     const parsedData = parseFileContent(content, fileMetadata.data.name);
+    
 
-    // 3️⃣ Find "Meet Recordings" folder ID
-    const folderName = "Meet Recordings";
-    const folderRes = await drive.files.list({
-      q: `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`,
-      fields: "files(id, name)",
-      supportsAllDrives: true,
-      includeItemsFromAllDrives: true,
-    });
-
-    if (!folderRes.data.files.length) {
-      console.warn(`⚠️ Folder "${folderName}" not found.`);
-    }
-
-    const folderId = folderRes.data.files[0]?.id;
+    const folderId = fileMetadata.data.parents?.[0];
 
     // 4️⃣ Search for matching recording only inside that folder
     const baseName = fileMetadata.data.name.replace(/ - Notes by Gemini/i, "").trim();
@@ -118,6 +109,8 @@ export async function GET(request, context) {
       });
 
       matchingRecording = recordingSearch.data.files?.[0] || null;
+
+      
     }
 
     // 5️⃣ Fetch Candidate data from DB

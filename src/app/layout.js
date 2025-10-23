@@ -2,6 +2,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Providers } from "./providers";
 import "./globals.css";
 import Header from "@/components/Header";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,6 +29,7 @@ export default function RootLayout({ children }) {
           </div>
           <main className="h-full bg-background text-foreground">
             {children}
+            <Toaster />
           </main>
         </Providers>
       </body>

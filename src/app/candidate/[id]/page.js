@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { toast } from "sonner";
 import { useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import { ArrowLeft,  Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import CandidateDetailSkeleton from '@/components/candidateSkelton';
@@ -51,6 +51,8 @@ const CandidateDetailPage = () => {
       if (data.managerComment) {
         setManagerComment(data.managerComment);
       }
+
+      
       
       setLoading(false);
     } catch (err) {
@@ -96,33 +98,35 @@ const CandidateDetailPage = () => {
 
   const handleSendToSlack = async () => {
     setIsSendingToSlack(true);
+    if (!slackChannel) {
+      toast.info('Please select a Slack channel.');
+      setIsSendingToSlack(false);
+      return;
+    }
     try {
       const response = await fetch('/api/slack/send-message', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ webhookResponse, candidate , candidateId  }),
+        body: JSON.stringify({ webhookResponse, candidate , candidateId ,slackChannel }),
       });
 
       if (response.ok) {
-        alert('Successfully sent to Slack!');
+        toast.success('Successfully sent to Slack!');
       } else {
         const errorData = await response.json();
-        alert(`Failed to send to Slack: ${errorData.error}`);
+        toast.error(`Failed to send to Slack: ${errorData.error}`);
         console.error('Failed to send to Slack');
       }
     } catch (error) {
-      alert('Failed to send to Slack.');
+      toast.error('Failed to send to Slack.');
       console.error('Error sending to Slack:', error);
     }
     setIsSendingToSlack(false);
   };
 
-  if (loading || !user) {
 
-    return <CandidateDetailSkeleton />;
-  }
 
   if (loading || !candidate) {
       return <CandidateDetailSkeleton />
@@ -156,7 +160,7 @@ const CandidateDetailPage = () => {
             </div>
 
             <div className="grid grid-cols-1 gap-6">
-                <div className="lg:col-span-2 space-y-6">
+                <div className="space-y-6">
                     <Card>
                         <CardHeader>
                             <CardTitle>Interview Notes & Transcript</CardTitle>
@@ -171,8 +175,8 @@ const CandidateDetailPage = () => {
                     </Card>
                     
                 </div>
-                <div className="space-y-6">
-                    <Card>
+                <div className="space-y-6 flex">
+                    <Card className={'w-full min-h-150px'}>
                         <CardHeader>
                             <CardTitle>Manager Review</CardTitle>
                         </CardHeader>
@@ -181,7 +185,7 @@ const CandidateDetailPage = () => {
                                 placeholder="Add your comments here..."
                                 value={managerComment}
                                 onChange={(e) => setManagerComment(e.target.value)}
-                                className="min-h-[150px]"
+                                className="h-[150px] w-full"
                             />
                             <div className="space-x-2 space-y-2 flex flex-row " style={{display: webhookResponse ? 'none' : 'flex flex-row'}}>
                                 <Button 

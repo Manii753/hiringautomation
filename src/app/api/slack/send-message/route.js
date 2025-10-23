@@ -22,23 +22,19 @@ export async function POST(request) {
 
   const data = await request.json();
 
-  console.log(data);
-
   if (!data) {
     return NextResponse.json({ error: 'Missing webhookResponse' }, { status: 400 });
   }
 
   try {
-    const response = await fetch(process.env.N8N_SLACK_WEBHOOK_URL, {
+    const response = await fetch(process.env.N8N_SENDTO_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        token: user.slackAccessToken,
-        channel: 'all-new-workspace', 
-        data,
-        
+        token: user.slackAccessToken, 
+        data, 
       }),
     });
 
