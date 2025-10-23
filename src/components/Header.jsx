@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from './ui/badge';
-import { Menu, AlertTriangle, Check } from 'lucide-react';
+import { Menu, AlertTriangle, Check, Slack, LogOut } from 'lucide-react';
 import {useEffect, useState } from 'react';
 import {
   AlertDialog,
@@ -117,14 +117,19 @@ const Header = () => {
                   <AlertDialog open={showSlackChannelDialog} onOpenChange={setShowSlackChannelDialog}>
                     <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                       {!isSlackConnected ? (
+                        
                         <Link href={`/api/auth/slack?candidateId=${candidateId}`} className='flex items-center w-full justify-between'>
+                          <img src="/slack.png" alt="Slack" className="w-4 h-4 mr-2" />
                           Slack
                           <AlertTriangle className="w-4 h-4 ml-2 mr-2 text-yellow-500" />
                         </Link>
                       ) : (
                         <AlertDialogTrigger asChild>
                           <div className='flex items-center w-full justify-between cursor-pointer'>
-                            Slack
+                            <div className='flex items-center justify-center'>
+                              <img src="/Slack.png" alt="Slack" className="w-4 h-4 mr-3" />
+                              Slack
+                            </div>
                             <Check className="w-4 h-4 ml-2 text-green-500" />
                           </div>
                         </AlertDialogTrigger>
@@ -149,12 +154,20 @@ const Header = () => {
                     </AlertDialogContent>
                   </AlertDialog>
                   <DropdownMenuItem>
-                    
-                    <Link href="#">ClickUp</Link>
+                      <div className='flex items-center w-full justify-between cursor-pointer'>
+                        <div className='flex items-center justify-center'>
+                          <img src="/ClickUpp.png" alt="ClickUp" className="w-5.5 h-5.5 mr-1 bg-transparent -translate-x-1" />
+                          ClickUP
+                        </div>
+                        <Check className="w-4 h-4 ml-2 text-green-500" />
+                      </div>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onSelect={() => signOut({ callbackUrl: '/login' })}>
-                    Logout
+                    <div className='flex justify-center items-center'>
+                      <LogOut/>
+                      <span className='ml-2'>Logout</span>
+                    </div>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
