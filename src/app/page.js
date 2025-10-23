@@ -64,7 +64,6 @@ const CandidateList = () => {
       const data = await response.json();
       setCandidates(data);
       setLoading(false);
-      console.log(data);
     } catch (err) {
       setLoading(false);
     }

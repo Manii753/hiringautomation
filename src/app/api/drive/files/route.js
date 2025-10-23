@@ -63,7 +63,7 @@ export async function GET() {
 
     const allFilesArrays = await Promise.all(allFilesPromises);
     const allFiles = allFilesArrays.flat();
-    console.table(allFiles);
+    
 
   return NextResponse.json(allFiles);
   } catch (error) {

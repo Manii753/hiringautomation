@@ -28,6 +28,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 
+
+
+
 const Header = () => {
   const { data: session, status, update } = useSession();
   const pathname = usePathname();
@@ -36,9 +39,25 @@ const Header = () => {
 
   // 🔹 Hide Header on /login page
   if (pathname === '/login') return null;
+  
 
-  const isSlackConnected = session?.user?.slackAccessToken;
+  const [isSlackConnected,setSlackConnected]=useState(false);
   const candidateId = pathname.startsWith('/candidate/') ? pathname.split('/')[2] : 'home';
+
+  
+  useEffect(() => {
+  const fetchUser = async () => {
+    if (session) {
+      const response = await fetch('/api/user');
+      const userData = await response.json();
+      
+      if (userData.slackAccessToken) {
+        setSlackConnected(true);
+      }
+    }
+  };
+  fetchUser();
+  }, [session]);
 
   const handleSaveSlackChannel = async () => {
     try {

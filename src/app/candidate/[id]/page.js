@@ -109,7 +109,7 @@ const CandidateDetailPage = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ webhookResponse, candidate , candidateId ,slackChannel }),
+        body: JSON.stringify({ webhookResponse, candidate ,candidateId ,slackChannel }),
       });
 
       if (response.ok) {
