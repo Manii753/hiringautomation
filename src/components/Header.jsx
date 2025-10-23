@@ -165,8 +165,8 @@ const Header = () => {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onSelect={() => signOut({ callbackUrl: '/login' })}>
                     <div className='flex justify-center items-center'>
-                      <LogOut/>
-                      <span className='ml-2'>Logout</span>
+                      <LogOut className='mr-2'/>
+                      <span className='-translate-y-0.5'>Logout</span>
                     </div>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
