@@ -4,6 +4,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Separator } from "@/components/ui/separator"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -142,11 +143,16 @@ const Header = () => {
                           Enter the default Slack channel name where you want to send notifications.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
-                      <Input
-                        placeholder="#your-channel-name"
-                        value={slackChannelName}
-                        onChange={(e) => setSlackChannelName(e.target.value)}
-                      />
+                       <div className="flex items-center border rounded-lg overflow-hidden">
+                          <span className="px-3 text-gray-600 font-medium">#</span>
+                          <Separator orientation="vertical" className="h-6" />
+                          <Input
+                            className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 "
+                            placeholder="your-channel-name"
+                            value={slackChannelName}
+                            onChange={(e) => setSlackChannelName(e.target.value)}
+                          />
+                        </div>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={handleSaveSlackChannel}>Save</AlertDialogAction>
