@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft,  Loader2 } from 'lucide-react';
+import { ArrowLeft,  FileVideo,  Loader2, LucideFileVideo } from 'lucide-react';
 import Link from 'next/link';
 import CandidateDetailSkeleton from '@/components/candidateSkelton';
 
@@ -149,6 +149,14 @@ const CandidateDetailPage = () => {
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">{candidate.candidateName}</h1>
                 <p className="text-gray-500 mt-1">{candidate.email}</p>
+                
+                <div className='flex items-center '>
+                  <LucideFileVideo className="h-4 w-4 mr-2" />
+                  <a className='underline text-blue-500' target="_blank" href={candidate.recordingLink}>
+                     Interview Recording
+                  </a>
+                </div>
+                 
                 <div className='flex gap-2'> 
                   <Badge variant={"outline"} className={"mt-2 h-8 w-fit flex items-center justify-center"}>
                     Interviewed on {candidate.interviewDate ? new Date(candidate.interviewDate).toLocaleDateString() : 'N/A'}

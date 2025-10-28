@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from './ui/badge';
-import { Menu, AlertTriangle, Check, Slack, LogOut } from 'lucide-react';
+import { Menu, AlertTriangle, Check, LogOut } from 'lucide-react';
 import {useEffect, useState } from 'react';
 import {
   AlertDialog,
@@ -54,6 +54,10 @@ const Header = () => {
       
       if (userData.slackAccessToken) {
         setSlackConnected(true);
+        
+      }
+      if (userData.slackChannel) {
+        setSlackChannelName(userData.slackChannel);
       }
     }
   };
@@ -131,7 +135,7 @@ const Header = () => {
                               <img src="/Slack.png" alt="Slack" className="w-4 h-4 mr-3" />
                               Slack
                             </div>
-                            <Check className="w-4 h-4 ml-2 text-green-500" />
+                            <Badge variant="green" className="text-[9px]">Connected</Badge>
                           </div>
                         </AlertDialogTrigger>
                       )}
