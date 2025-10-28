@@ -183,7 +183,7 @@ const CandidateList = () => {
 
       <Card >
         <CardContent className="p-0">
-          <ScrollArea className="h-[calc(100vh-260px)] w-full overflow-x-auto">
+          <ScrollArea className="h-[calc(100vh-260px)] w-full overflow-x-auto ">
             <table className=" w-full">
               <thead className="bg-gray-50 border-b sticky top-0">
                 <tr>
