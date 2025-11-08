@@ -57,6 +57,7 @@ export const authOptions = {
           accessToken: account.access_token,
           accessTokenExpires: Date.now() + account.expires_in * 1000,
           refreshToken: account.refresh_token,
+          slackChannel: user.slackChannel,
           user,
         }
       }
@@ -73,6 +74,7 @@ export const authOptions = {
       session.user = token.user
       session.accessToken = token.accessToken
       session.error = token.error
+      session.slackChannel = token.slackChannel
 
       return session
     }

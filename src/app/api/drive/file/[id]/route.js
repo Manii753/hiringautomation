@@ -65,7 +65,7 @@ function parseFileContent(content, fileName = "") {
 }
 
 export async function GET(request, context) {
-  const { params } = context;
+  const { params } = await context;
   const fileId = params.id;
 
   const session = await getServerSession(authOptions);

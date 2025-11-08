@@ -47,21 +47,17 @@ const Header = () => {
 
   
   useEffect(() => {
-  const fetchUser = async () => {
+  
     if (session) {
-      const response = await fetch('/api/user');
-      const userData = await response.json();
-      
-      if (userData.slackAccessToken) {
+      if (session?.user?.slackAccessToken) {
         setSlackConnected(true);
         
       }
-      if (userData.slackChannel) {
-        setSlackChannelName(userData.slackChannel);
+      if (session.slackChannel) {
+        setSlackChannelName(session.slackChannel);
       }
     }
-  };
-  fetchUser();
+  
   }, [session]);
 
   const handleSaveSlackChannel = async () => {

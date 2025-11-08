@@ -6,7 +6,7 @@ import dbConnect from '@/lib/dbConnect';
 import Candidate from '@/lib/models/Candidate';
 
 export async function POST(request, context) {
-    const { params } = context;
+    const { params } = await context;
     const fileId = params.id;
 
     const session = await getServerSession(authOptions);
@@ -32,22 +32,17 @@ export async function POST(request, context) {
         oauth2Client.setCredentials({ access_token: session.accessToken });
         const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
-        // First, get the current appProperties
-        const fileMetadata = await drive.files.get({
-            fileId: fileId,
-            fields: 'appProperties',
-            supportsAllDrives: true,
-        });
+       
 
-        const existingAppProperties = fileMetadata.data.appProperties || {};
+        
 
         await drive.files.update({
             fileId: fileId,
+            requestBody: {
             appProperties: {
-                ...existingAppProperties,
-                status: 'pending'
+                status: 'pending',
             },
-            supportsAllDrives: true,
+            }
         });
 
         return NextResponse.json({ message: 'Candidate set for re-evaluation.' });

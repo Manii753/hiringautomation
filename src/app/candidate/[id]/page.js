@@ -44,17 +44,17 @@ const CandidateDetailPage = () => {
 
 
   useEffect(() => {
-    const fetchUser = async () => {
+    
       if (session) {
-        const response = await fetch('/api/user');
-        const userData = await response.json();
-        setUser(userData);
-        if (userData.slackChannel) {
-          setSlackChannel(userData.slackChannel);
+        
+        
+        setUser(session.user);
+        if (session.slackChannel) {
+          setSlackChannel(session.slackChannel);
         }
       }
-    };
-    fetchUser();
+    
+    
   }, [session]);
 
   const fetchCandidateDetail = async () => {
@@ -63,6 +63,7 @@ const CandidateDetailPage = () => {
       const response = await fetch(`/api/drive/file/${candidateId}`);
       const data = await response.json();
       setCandidate(data);
+      console.log(data);
       if (data.webhookResponse) {
         setWebhookResponse(data.webhookResponse);
         setEditedWebhookResponse(data.webhookResponse);
@@ -218,14 +219,14 @@ const CandidateDetailPage = () => {
   return (
     
        
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 ">
         {isNotesOverlayVisible && (
             <div 
                 className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
                 onClick={() => setIsNotesOverlayVisible(false)}
             >
                 <div 
-                    className="bg-background rounded-lg shadow-xl w-3/4 h-3/4 p-6 relative"
+                    className=" bg-background rounded-lg shadow-xl w-3/4 h-3/4 p-6 relative m-auto "
                     onClick={(e) => e.stopPropagation()}
                 >
                     <Button 
@@ -281,7 +282,7 @@ const CandidateDetailPage = () => {
               <div className='flex flex-col items-end' >
                 <div className='flex items-center'>
                   <span className='text-muted-foreground text-xs text-center mr-2'>Slack Channel</span>
-                  <Badge variant={"outline"} className={"h-8 w-fit flex"}> {user.slackChannel} </Badge>
+                  <Badge variant={"outline"} className={"h-8 w-fit flex"}> {session?.slackChannel} </Badge>
                 </div>
                 {webhookResponse && (
                   <AlertDialog>
