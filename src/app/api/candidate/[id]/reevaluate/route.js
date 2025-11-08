@@ -6,8 +6,8 @@ import dbConnect from '@/lib/dbConnect';
 import Candidate from '@/lib/models/Candidate';
 
 export async function POST(request, context) {
-    const { params } = await context;
-    const fileId = params.id;
+    const { id } = await context.params;
+    const fileId = id;
 
     const session = await getServerSession(authOptions);
     if (!session) {
