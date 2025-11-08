@@ -9,6 +9,7 @@ export async function GET() {
 
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    
   }
 
   const oauth2Client = new google.auth.OAuth2()

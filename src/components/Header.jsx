@@ -28,7 +28,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-
+import { ThemeToggle } from './ThemeToggle';
 
 
 
@@ -86,7 +86,7 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200">
+    <header className="bg-background border-b">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
           <div>
@@ -95,13 +95,14 @@ const Header = () => {
                 Hiring Manager Dashboard
               </h1>
             </Link>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Powered by n8n Automation
             </p>
           </div>
 
           {status === 'authenticated' && session?.user && (
             <div className="flex items-center space-x-4">
+              <ThemeToggle />
               <DropdownMenu>
                 
                   <div className="flex items-center space-x-4 ">
@@ -150,7 +151,7 @@ const Header = () => {
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                        <div className="flex items-center border rounded-lg overflow-hidden">
-                          <span className="px-3 text-gray-600 font-medium">#</span>
+                          <span className="px-3 text-muted-foreground font-medium">#</span>
                           <Separator orientation="vertical" className="h-6" />
                           <Input
                             className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 "
@@ -192,3 +193,4 @@ const Header = () => {
 };
 
 export default Header;
+

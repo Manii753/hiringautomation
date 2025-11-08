@@ -7,7 +7,7 @@ import Link from 'next/link';
 
 const CandidateDetailSkeleton = () => {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted">
       
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -22,13 +22,13 @@ const CandidateDetailSkeleton = () => {
           </div>
 
           <div>
-            <Skeleton className="h-9 w-64 mb-2" />
-            <Skeleton className="h-5 w-48 mb-3" />
+            <Skeleton className="h-9 w-64 mb-2 bg-background" />
+            <Skeleton className="h-5 w-48 mb-3 bg-background" />
             <div className="flex gap-2">
-              <Skeleton className="h-8 w-40" />
-              <Skeleton className="h-8 w-24" />
+              <Skeleton className="h-8 w-40 bg-background" />
+              <Skeleton className="h-8 w-24 bg-background" />
             </div>
-            <Skeleton className="h-8 w-24 mt-2" />
+            <Skeleton className="h-8 w-24 mt-2 bg-background" />
           </div>
 
           <div className="grid grid-cols-1 gap-6">
@@ -38,7 +38,7 @@ const CandidateDetailSkeleton = () => {
                   <Skeleton className="h-6 w-56" />
                 </CardHeader>
                 <CardContent>
-                  <div className="bg-gray-50 rounded-lg p-4 h-96 space-y-3">
+                  <div className="bg-muted rounded-lg p-4 h-96 space-y-3">
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-11/12" />
                     <Skeleton className="h-4 w-full" />

@@ -9,7 +9,7 @@ const CandidateListSkeleton = () => {
     <div className="h-full space-y-6">
       {/* Search and Filter Controls Skeleton */}
       <div className="flex items-center justify-between">
-        <Skeleton className="h-9 w-95" />
+        <Skeleton className="h-9 w-95 " />
         <div className="flex items-center space-x-2">
           <Skeleton className="h-9 w-33" />
           <Skeleton className="h-9 w-33" />
@@ -24,16 +24,16 @@ const CandidateListSkeleton = () => {
           <ScrollArea className="h-[calc(100vh-260px)] w-full overflow-x-auto">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b">
+              <thead className="bg-muted border-b">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Interview Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Owner</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Interview Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Owner</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-background divide-y divide-border">
                 {[...Array(12)].map((_, index) => (
                   <tr key={index}>
                     <td className="px-6 py-4 whitespace-nowrap">

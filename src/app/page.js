@@ -185,40 +185,40 @@ const CandidateList = () => {
         <CardContent className="p-0">
           <ScrollArea className="h-[calc(100vh-260px)] w-full overflow-x-auto ">
             <table className=" w-full">
-              <thead className="bg-gray-50 border-b sticky top-0">
+              <thead className="bg-muted border-b sticky top-0">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => requestSort('createdTime')}>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider cursor-pointer" onClick={() => requestSort('createdTime')}>
                     <div className="flex items-center">
                       Interview Date
                       {sortConfig.key === 'createdTime' && (sortConfig.direction === 'ascending' ? <ArrowUp className="h-4 w-4 ml-1" /> : <ArrowDown className="h-4 w-4 ml-1" />)}
                     </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Owner
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-background divide-y divide-border">
                   {sortedCandidates.map((candidate) => {
                     const status = candidate.appProperties?.status || "pending";
 
                     return (
                       <tr
                         key={candidate.id}
-                        className="hover:bg-gray-50 transition-colors"
+                        className="hover:bg-muted transition-colors"
                       >
-                        <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap font-medium text-foreground">
                           {extractNameFromFileName(candidate.name)}
                         </td>
 
-                        <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                        <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">
                           {new Date(candidate.createdTime).toLocaleDateString()}
                         </td>
 
-                        <td className="px-6 py-4 whitespace-nowrap text-gray-600 cursor-pointer">
+                        <td className="px-6 py-4 whitespace-nowrap text-muted-foreground cursor-pointer">
                           <Tooltip>
                             <TooltipTrigger>{candidate.owners?.[0]?.displayName}</TooltipTrigger>
                             <TooltipContent>
@@ -271,7 +271,7 @@ export default function App() {
   if (status === 'loading') {
     return (
       <div className="flex items-center justify-center h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -281,7 +281,7 @@ export default function App() {
   }
 
   return (
-    <div className="h-full bg-gray-50">
+    <div className="h-full bg-muted">
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <CandidateList />
       </main>

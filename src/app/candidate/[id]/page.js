@@ -8,9 +8,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft,  FileVideo,  Loader2, LucideFileVideo, Pencil, Maximize, X } from 'lucide-react';
+import { ArrowLeft,  FileVideo,  Loader2, LucideFileVideo, Pencil, Maximize, X, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import CandidateDetailSkeleton from '@/components/candidateSkelton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+
 
 const CandidateDetailPage = () => {
   const params = useParams();
@@ -28,6 +40,7 @@ const CandidateDetailPage = () => {
   const [editedWebhookResponse, setEditedWebhookResponse] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isNotesOverlayVisible, setIsNotesOverlayVisible] = useState(false);
+  const [isReevaluating, setIsReevaluating] = useState(false);
 
 
   useEffect(() => {
@@ -53,9 +66,14 @@ const CandidateDetailPage = () => {
       if (data.webhookResponse) {
         setWebhookResponse(data.webhookResponse);
         setEditedWebhookResponse(data.webhookResponse);
+      } else {
+        setWebhookResponse(null);
+        setEditedWebhookResponse(null);
       }
       if (data.managerComment) {
         setManagerComment(data.managerComment);
+      } else {
+        setManagerComment('');
       }
 
       
@@ -89,7 +107,7 @@ const CandidateDetailPage = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setCandidate(prev => ({...prev, status: status}));
+        setCandidate(prev => ({...prev, status: status, appProperties: {...prev.appProperties, status: status}}));
         if(data.webhookData) {
             setWebhookResponse(data.webhookData);
             setEditedWebhookResponse(data.webhookData);
@@ -164,6 +182,34 @@ const CandidateDetailPage = () => {
     setEditedWebhookResponse(prev => ({ ...prev, [key]: value }));
   };
 
+  const handleReevaluate = async () => {
+    setIsReevaluating(true);
+    try {
+      const response = await fetch(`/api/candidate/${candidateId}/reevaluate`, {
+        method: 'POST',
+      });
+
+      if (response.ok) {
+        toast.success('Candidate has been set for re-evaluation.');
+        // Optimistically update UI
+        setWebhookResponse(null);
+        setManagerComment('');
+        setCandidate(prev => ({
+            ...prev,
+            appProperties: {
+                ...prev.appProperties,
+                status: 'pending'
+            }
+        }));
+      } else {
+        toast.error('Failed to set for re-evaluation.');
+      }
+    } catch (error) {
+      toast.error('An error occurred during re-evaluation.');
+    }
+    setIsReevaluating(false);
+  };
+
 
   if (loading || !candidate) {
       return <CandidateDetailSkeleton />
@@ -175,11 +221,11 @@ const CandidateDetailPage = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {isNotesOverlayVisible && (
             <div 
-                className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+                className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
                 onClick={() => setIsNotesOverlayVisible(false)}
             >
                 <div 
-                    className="bg-white rounded-lg shadow-xl w-3/4 h-3/4 p-6 relative"
+                    className="bg-background rounded-lg shadow-xl w-3/4 h-3/4 p-6 relative"
                     onClick={(e) => e.stopPropagation()}
                 >
                     <Button 
@@ -212,11 +258,11 @@ const CandidateDetailPage = () => {
             <div className="flex justify-between">
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">{candidate.candidateName}</h1>
-                <p className="text-gray-500 mt-1">{candidate.email}</p>
+                <p className="text-muted-foreground mt-1">{candidate.email}</p>
                 
                 <div className='flex items-center '>
                   <LucideFileVideo className="h-4 w-4 mr-2" />
-                  <a className='underline text-blue-500' target="_blank" href={candidate.recordingLink}>
+                  <a className='underline text-primary' target="_blank" href={candidate.recordingLink}>
                      Interview Recording
                   </a>
                 </div>
@@ -232,9 +278,33 @@ const CandidateDetailPage = () => {
               </div>
 
               
-              <div className='flex' >
-                <span className='text-gray-500 text-xs text-center mt-2 mr-2'>Slack Channel</span>
-                <Badge variant={"outline"} className={"h-8 w-fit flex"}> {user.slackChannel} </Badge>
+              <div className='flex flex-col items-end' >
+                <div className='flex items-center'>
+                  <span className='text-muted-foreground text-xs text-center mr-2'>Slack Channel</span>
+                  <Badge variant={"outline"} className={"h-8 w-fit flex"}> {user.slackChannel} </Badge>
+                </div>
+                {webhookResponse && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" className="w-full mt-2" disabled={isReevaluating}>
+                        {isReevaluating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+                        Re-evaluate
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will reset the evaluation status to 'pending' and delete the current AI summary and manager comment. This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleReevaluate}>Confirm</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
               </div>
 
               
@@ -252,7 +322,7 @@ const CandidateDetailPage = () => {
                             </Button>
                         </CardHeader>
                         <CardContent>
-                            <div className="bg-gray-50 rounded-lg p-4 h-96 overflow-y-auto">
+                            <div className="bg-muted rounded-lg p-4 h-96 overflow-y-auto">
                             <pre className="whitespace-pre-wrap text-sm font-mono leading-relaxed">
                                 {candidate.content}
                             </pre>
@@ -272,12 +342,12 @@ const CandidateDetailPage = () => {
                                 value={managerComment}
                                 onChange={(e) => setManagerComment(e.target.value)}
                                 className="h-[150px] w-full"
+                                readOnly={!!webhookResponse}
                             />
-                            <div className="space-x-2 space-y-2 flex flex-row " style={{display: webhookResponse ? 'none' : 'flex flex-row'}}>
+                            <div className="space-x-2 space-y-2 flex flex-row " style={{display: webhookResponse ? 'none' : 'flex'}}>
                                 <Button 
                                     onClick={() => handleStatusChange('pass')} 
-                                    disabled={isSubmitting || candidate.status === 'pass'}
-                                    variant={candidate.status === 'pass' ? 'green' : 'green'}
+                                    disabled={isSubmitting || candidate.appProperties?.status === 'pass'}
                                     className="flex-1" 
                                 >
                                     {isSubmitting === 'pass' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
@@ -285,9 +355,8 @@ const CandidateDetailPage = () => {
                                 </Button>
                                 <Button 
                                     onClick={() => handleStatusChange('fail')} 
-                                    
-                                    disabled={isSubmitting || candidate.status === 'fail'}
-                                    variant={candidate.status === 'fail' ? 'destructive' : 'red'}
+                                    disabled={isSubmitting || candidate.appProperties?.status === 'fail'}
+                                    variant={'destructive'}
                                     className="flex-1"
                                 >
                                     {isSubmitting === 'fail' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
@@ -313,7 +382,7 @@ const CandidateDetailPage = () => {
                           <>
                             {Object.entries(editedWebhookResponse).map(([key, value]) => (
                               <div key={key}>
-                                <h3 className="font-semibold text-gray-800 capitalize">{key.replace(/_/g, ' ')}</h3>
+                                <h3 className="font-semibold text-foreground capitalize">{key.replace(/_/g, ' ')}</h3>
                                 <Textarea
                                   value={value}
                                   onChange={(e) => handleWebhookResponseChange(key, e.target.value)}
@@ -333,8 +402,8 @@ const CandidateDetailPage = () => {
                           <>
                             {Object.entries(webhookResponse).map(([key, value]) => (
                               <div key={key}>
-                                <h3 className="font-semibold text-gray-800 capitalize">{key.replace(/_/g, ' ')}</h3>
-                                <p className="text-gray-600 whitespace-pre-wrap">{value}</p>
+                                <h3 className="font-semibold text-foreground capitalize">{key.replace(/_/g, ' ')}</h3>
+                                <p className="text-muted-foreground whitespace-pre-wrap">{value}</p>
                               </div>
                             ))}
                             <div className="space-y-2">
