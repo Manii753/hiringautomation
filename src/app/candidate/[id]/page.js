@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft,  FileVideo,  Loader2, LucideFileVideo, Pencil } from 'lucide-react';
+import { ArrowLeft,  FileVideo,  Loader2, LucideFileVideo, Pencil, Maximize, X } from 'lucide-react';
 import Link from 'next/link';
 import CandidateDetailSkeleton from '@/components/candidateSkelton';
 
@@ -27,6 +27,7 @@ const CandidateDetailPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedWebhookResponse, setEditedWebhookResponse] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isNotesOverlayVisible, setIsNotesOverlayVisible] = useState(false);
 
 
   useEffect(() => {
@@ -172,6 +173,32 @@ const CandidateDetailPage = () => {
     
        
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {isNotesOverlayVisible && (
+            <div 
+                className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+                onClick={() => setIsNotesOverlayVisible(false)}
+            >
+                <div 
+                    className="bg-white rounded-lg shadow-xl w-3/4 h-3/4 p-6 relative"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="absolute top-4 right-4"
+                        onClick={() => setIsNotesOverlayVisible(false)}
+                    >
+                        <X className="h-6 w-6" />
+                    </Button>
+                    <h2 className="text-2xl font-bold mb-4">Interview Notes & Transcript</h2>
+                    <div className="h-[calc(100%-4rem)] overflow-y-auto">
+                        <pre className="whitespace-pre-wrap text-sm font-mono leading-relaxed">
+                            {candidate.content}
+                        </pre>
+                    </div>
+                </div>
+            </div>
+        )}
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <Link href="/">
@@ -218,8 +245,11 @@ const CandidateDetailPage = () => {
             <div className="grid grid-cols-1 gap-6">
                 <div className="space-y-6">
                     <Card>
-                        <CardHeader>
+                        <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle>Interview Notes & Transcript</CardTitle>
+                            <Button variant="outline" size="icon" onClick={() => setIsNotesOverlayVisible(true)}>
+                                <Maximize className="h-4 w-4" />
+                            </Button>
                         </CardHeader>
                         <CardContent>
                             <div className="bg-gray-50 rounded-lg p-4 h-96 overflow-y-auto">
