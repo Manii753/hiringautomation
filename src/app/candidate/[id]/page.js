@@ -219,14 +219,15 @@ const CandidateDetailPage = () => {
   return (
     
        
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 ">
+      <main className="max-w-7xl m-auto px-4 sm:px-6 lg:px-8 py-8 ">
         {isNotesOverlayVisible && (
-            <div 
-                className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
+           
+           <div 
+                className="flex justify-center items-center fixed inset-0 z-50 bg-background/60 backdrop-blur-sm"
                 onClick={() => setIsNotesOverlayVisible(false)}
             >
                 <div 
-                    className=" bg-background rounded-lg shadow-xl w-3/4 h-3/4 p-6 relative m-auto "
+                    className=" bg-muted rounded-lg shadow-xl w-3/4 h-4/5 p-6 relative"
                     onClick={(e) => e.stopPropagation()}
                 >
                     <Button 
