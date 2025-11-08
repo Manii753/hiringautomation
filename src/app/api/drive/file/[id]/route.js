@@ -144,3 +144,36 @@ export async function GET(request, context) {
     );
   }
 }
+
+export async function PATCH(request, context) {
+    const { params } = context;
+    const fileId = params.id;
+
+    const session = await getServerSession(authOptions);
+    if (!session) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    try {
+        const { webhookResponse } = await request.json();
+
+        await dbConnect();
+
+        const candidate = await Candidate.findOne({ fileId });
+
+        if (!candidate) {
+            return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
+        }
+
+        candidate.webhookResponse = webhookResponse;
+        await candidate.save();
+
+        return NextResponse.json(candidate);
+    } catch (error) {
+        console.error(`Error updating candidate ${fileId}:`, error);
+        return NextResponse.json(
+            { error: `Error updating candidate ${fileId}` },
+            { status: 500 }
+        );
+    }
+}

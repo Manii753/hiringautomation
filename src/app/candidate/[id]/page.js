@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft,  FileVideo,  Loader2, LucideFileVideo } from 'lucide-react';
+import { ArrowLeft,  FileVideo,  Loader2, LucideFileVideo, Pencil } from 'lucide-react';
 import Link from 'next/link';
 import CandidateDetailSkeleton from '@/components/candidateSkelton';
 
@@ -24,6 +24,10 @@ const CandidateDetailPage = () => {
   const [webhookResponse, setWebhookResponse] = useState(null);
   const [isSendingToSlack, setIsSendingToSlack] = useState(false);
   const [slackChannel, setSlackChannel] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedWebhookResponse, setEditedWebhookResponse] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -47,6 +51,7 @@ const CandidateDetailPage = () => {
       setCandidate(data);
       if (data.webhookResponse) {
         setWebhookResponse(data.webhookResponse);
+        setEditedWebhookResponse(data.webhookResponse);
       }
       if (data.managerComment) {
         setManagerComment(data.managerComment);
@@ -86,6 +91,7 @@ const CandidateDetailPage = () => {
         setCandidate(prev => ({...prev, status: status}));
         if(data.webhookData) {
             setWebhookResponse(data.webhookData);
+            setEditedWebhookResponse(data.webhookData);
         }
       } else {
         console.error('Failed to update candidate status');
@@ -126,6 +132,36 @@ const CandidateDetailPage = () => {
     setIsSendingToSlack(false);
   };
 
+  const handleEdit = () => setIsEditing(true);
+  const handleCancel = () => {
+    setIsEditing(false);
+    setEditedWebhookResponse(webhookResponse);
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const response = await fetch(`/api/drive/file/${candidateId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ webhookResponse: editedWebhookResponse }),
+      });
+      if (response.ok) {
+        setWebhookResponse(editedWebhookResponse);
+        setIsEditing(false);
+        toast.success('AI Evaluation has been updated.');
+      } else {
+        toast.error('Failed to update AI Evaluation.');
+      }
+    } catch (error) {
+      toast.error('An error occurred while saving.');
+    }
+    setIsSaving(false);
+  };
+
+  const handleWebhookResponseChange = (key, value) => {
+    setEditedWebhookResponse(prev => ({ ...prev, [key]: value }));
+  };
 
 
   if (loading || !candidate) {
@@ -234,27 +270,55 @@ const CandidateDetailPage = () => {
                 <div>
                   {webhookResponse && (
                     <Card>
-                      <CardHeader>
+                      <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>AI Evaluation Summary</CardTitle>
+                        {!isEditing && (
+                          <Button variant="outline" size="icon" onClick={handleEdit}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
                       </CardHeader>
                       <CardContent className="space-y-4">
-                        {Object.entries(webhookResponse).map(([key, value]) => (
-                          <div key={key}>
-                            <h3 className="font-semibold text-gray-800">{key}</h3>
-                            <p className="text-gray-600">{value}</p>
-                          </div>
-                        ))}
-                        <div className="space-y-2">
-                          
-                          <Button
-                              onClick={handleSendToSlack}
-                              disabled={isSendingToSlack || !user.slackAccessToken}
-                              className="w-full mt-4"
-                          >
-                              {isSendingToSlack ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                              Send to Slack
-                          </Button>
-                        </div>
+                        {isEditing ? (
+                          <>
+                            {Object.entries(editedWebhookResponse).map(([key, value]) => (
+                              <div key={key}>
+                                <h3 className="font-semibold text-gray-800 capitalize">{key.replace(/_/g, ' ')}</h3>
+                                <Textarea
+                                  value={value}
+                                  onChange={(e) => handleWebhookResponseChange(key, e.target.value)}
+                                  className="mt-1 min-h-[100px]"
+                                />
+                              </div>
+                            ))}
+                            <div className="flex space-x-2 justify-end">
+                              <Button variant="ghost" onClick={handleCancel} disabled={isSaving}>Cancel</Button>
+                              <Button onClick={handleSave} disabled={isSaving}>
+                                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Save
+                              </Button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            {Object.entries(webhookResponse).map(([key, value]) => (
+                              <div key={key}>
+                                <h3 className="font-semibold text-gray-800 capitalize">{key.replace(/_/g, ' ')}</h3>
+                                <p className="text-gray-600 whitespace-pre-wrap">{value}</p>
+                              </div>
+                            ))}
+                            <div className="space-y-2">
+                              <Button
+                                  onClick={handleSendToSlack}
+                                  disabled={isSendingToSlack || !user.slackAccessToken}
+                                  className="w-full mt-4"
+                              >
+                                  {isSendingToSlack ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                  Send to Slack
+                              </Button>
+                            </div>
+                          </>
+                        )}
                       </CardContent>
                     </Card>
                   )}
