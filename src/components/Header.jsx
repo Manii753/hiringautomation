@@ -124,9 +124,11 @@ const Header = () => {
                       {!isSlackConnected ? (
                         
                         <Link href={`/api/auth/slack?candidateId=${candidateId}`} className='flex items-center w-full justify-between'>
-                          <img src="/slack.png" alt="Slack" className="w-4 h-4 mr-2" />
-                          Slack
-                          <AlertTriangle className="w-4 h-4 ml-2 mr-2 text-yellow-500" />
+                          <div className='flex items-center'>
+                            <img src="/slack.png" alt="Slack" className="w-4 h-4 mr-3" />
+                            Slack
+                          </div>
+                          <AlertTriangle className="w-4 h-4 ml-2 text-yellow-500" />
                         </Link>
                       ) : (
                         <AlertDialogTrigger asChild>

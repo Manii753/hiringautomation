@@ -146,7 +146,8 @@ const CandidateDetailPage = () => {
                 </Link>
             </div>
 
-            <div>
+            <div className="flex justify-between">
+              <div>
                 <h1 className="text-3xl font-bold tracking-tight">{candidate.candidateName}</h1>
                 <p className="text-gray-500 mt-1">{candidate.email}</p>
                 
@@ -165,7 +166,18 @@ const CandidateDetailPage = () => {
                 </div> 
                 <Badge variant={candidate.appProperties?.status === 'pass' ? "green" : candidate.appProperties?.status === 'fail' ? "destructive" : "default"} className="mt-2 h-8 w-fit flex items-center justify-center">{candidate.appProperties?.status || 'pending'}</Badge>
                 
+              </div>
+
+              
+              <div className='flex' >
+                <span className='text-gray-500 text-xs text-center mt-2 mr-2'>Slack Channel</span>
+                <Badge variant={"outline"} className={"h-8 w-fit flex"}> {user.slackChannel} </Badge>
+              </div>
+
+              
+
             </div>
+            
 
             <div className="grid grid-cols-1 gap-6">
                 <div className="space-y-6">
