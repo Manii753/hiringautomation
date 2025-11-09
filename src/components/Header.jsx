@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from './ui/badge';
-import { Menu, AlertTriangle, Check, LogOut } from 'lucide-react';
+import { Menu, AlertTriangle, Check, LogOut, Briefcase } from 'lucide-react';
 import {useEffect, useState } from 'react';
 import {
   AlertDialog,
@@ -85,7 +85,7 @@ const Header = () => {
     <header className="bg-background border-b">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
-          <div>
+          <div className="flex items-center space-x-4">
             <Link href="/">
               <h1 className="text-xl cursor-pointer font-semibold">
                 Hiring Manager Dashboard
@@ -172,6 +172,14 @@ const Header = () => {
                       </div>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <Link href="/jobs" className='flex items-center w-full'>
+                      <div className='flex items-center w-full cursor-pointer'>
+                        <Briefcase className='mr-2 h-4 w-4'/>
+                        <span className=''>Jobs</span>
+                      </div>
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem onSelect={() => signOut({ callbackUrl: '/login' })}>
                     <div className='flex justify-center items-center'>
                       <LogOut className='mr-2'/>
@@ -189,4 +197,3 @@ const Header = () => {
 };
 
 export default Header;
-

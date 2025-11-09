@@ -49,6 +49,7 @@ export async function GET(request) {
     const { authed_user, team } = data;
     const access_token = data.authed_user.access_token;
     
+    session.user.slackAccessToken = access_token;
 
 
     await dbConnect();
