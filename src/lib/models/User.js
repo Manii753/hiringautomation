@@ -10,9 +10,13 @@ const UserSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
+  clickUpAccessToken : {
+    type: String,
+    
+  },
   image: String,
   slackAccessToken: String, 
-  clickUpAccessToken : String,
+  
   slackUserId: String,
   slackTeamId: String,
   slackChannel: String, 

@@ -37,12 +37,16 @@ const Header = () => {
   const pathname = usePathname();
   const [showSlackChannelDialog, setShowSlackChannelDialog] = useState(false);
   const [slackChannelName, setSlackChannelName] = useState(session?.user?.slackChannel || '');
+  const [showClickUpTokenDialog, setShowClickUpTokenDialog] = useState(false);
+  const [clickUpAccessToken, setClickUpAccessToken] = useState(session?.user?.clickUpAccessToken || '');
+  
 
   // 🔹 Hide Header on /login page
   if (pathname === '/login') return null;
   
 
   const [isSlackConnected,setSlackConnected]=useState(false);
+  const [isClickUpConnected, setIsClickUpConnected] = useState(false);
   const candidateId = pathname.startsWith('/candidate/') ? pathname.split('/')[2] : 'home';
 
   
@@ -55,6 +59,10 @@ const Header = () => {
       }
       if (session.slackChannel) {
         setSlackChannelName(session.slackChannel);
+      }
+      if (session?.user?.clickUpAccessToken) {
+        setIsClickUpConnected(true);
+        setClickUpAccessToken(session.user.clickUpAccessToken);
       }
     }
   
@@ -71,13 +79,34 @@ const Header = () => {
       });
 
       if (response.ok) {
-        await update(); // Refresh the session
+        
         setShowSlackChannelDialog(false);
       } else {
         console.error('Failed to update Slack channel');
       }
     } catch (error) {
       console.error('Error updating Slack channel:', error);
+    }
+  };
+
+  const handleSaveClickUpToken = async () => {
+    try {
+      const response = await fetch('/api/user/clickup-token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ clickUpAccessToken: clickUpAccessToken }),
+      });
+
+      if (response.ok) {
+        
+        setShowClickUpTokenDialog(false);
+      } else {
+        console.error('Failed to update ClickUp access token');
+      }
+    } catch (error) {
+      console.error('Error updating ClickUp access token:', error);
     }
   };
 
@@ -162,15 +191,52 @@ const Header = () => {
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
-                  <DropdownMenuItem>
-                      <div className='flex items-center w-full justify-between cursor-pointer'>
-                        <div className='flex items-center justify-center'>
-                          <img src="/ClickUpp.png" alt="ClickUp" className="w-5.5 h-5.5 mr-1 bg-transparent -translate-x-1" />
-                          ClickUP
-                        </div>
-                        <Check className="w-4 h-4 ml-2 text-green-500" />
+                  <AlertDialog open={showClickUpTokenDialog} onOpenChange={setShowClickUpTokenDialog}>
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                      {!isClickUpConnected ? (
+                        <AlertDialogTrigger asChild>
+                          <div className='flex items-center w-full justify-between cursor-pointer'>
+                            <div className='flex items-center justify-center'>
+                              <img src="/ClickUpp.png" alt="ClickUp" className="w-5.5 h-5.5 mr-1 bg-transparent -translate-x-1" />
+                              ClickUP
+                            </div>
+                            <AlertTriangle className="w-4 h-4 ml-2 text-yellow-500" />
+                          </div>
+                        </AlertDialogTrigger>
+                      ) : (
+                        <AlertDialogTrigger asChild>
+                          <div className='flex items-center w-full justify-between cursor-pointer'>
+                            <div className='flex items-center justify-center'>
+                              <img src="/ClickUpp.png" alt="ClickUp" className="w-5.5 h-5.5 mr-1 bg-transparent -translate-x-1" />
+                              ClickUP
+                            </div>
+                            <Badge variant="green" className="text-[9px]">Connected</Badge>
+                          </div>
+                        </AlertDialogTrigger>
+                      )}
+                    </DropdownMenuItem>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Set ClickUp Access Token</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Enter your ClickUp personal access token. This token will be stored securely.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <div className="flex items-center border rounded-lg overflow-hidden">
+                        <Input
+                          className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 "
+                          placeholder="ClickUp Access Token"
+                          type="password"
+                          value={clickUpAccessToken}
+                          onChange={(e) => setClickUpAccessToken(e.target.value)}
+                        />
                       </div>
-                  </DropdownMenuItem>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleSaveClickUpToken}>Save</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>
                     <Link href="/jobs" className='flex items-center w-full'>
