@@ -68,7 +68,7 @@ const Header = () => {
       if (session?.user?.clickUpAccessToken) {
         setIsClickUpConnected(true);
         setClickUpAccessToken(session.user.clickUpAccessToken);
-       
+        verifyClickUpToken(session.user.clickUpAccessToken);
       }
     }
   
@@ -91,7 +91,7 @@ const Header = () => {
         const data = await response.json();
         setClickUpUserInfo(data.user);
         setClickUpConnectionStatus('Connected to ClickUp successfully!');
-        toast.success('ClickUp token verified successfully!');
+        
         return true;
       } else {
         const errorData = await response.json();
