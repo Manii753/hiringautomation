@@ -18,6 +18,7 @@ async function refreshAccessToken(token) {
     })
 
     const refreshedTokens = await response.json()
+    console.log("refreshedTokens", refreshedTokens)
     if (!response.ok) throw refreshedTokens
 
     return {
@@ -51,8 +52,28 @@ export const authOptions = {
   session: { strategy: "jwt" },
   callbacks: {
     async jwt({ token, user, account }) {
+      
+
       // Initial sign in
       if (account && user) {
+        console.log("Initial sign in. Storing new tokens.");
+        
+        // Store refresh token in database
+        if (account.refresh_token) {
+          const client = await clientPromise;
+          const db = client.db();
+          await db.collection("accounts").updateOne(
+            { userId: user.id, provider: "google" },
+            { 
+              $set: { 
+                refresh_token: account.refresh_token,
+                access_token: account.access_token,
+                expires_at: Math.floor(Date.now() / 1000) + account.expires_in
+              } 
+            }
+          );
+        }
+        
         return {
           accessToken: account.access_token,
           accessTokenExpires: Date.now() + account.expires_in * 1000,
@@ -62,12 +83,32 @@ export const authOptions = {
         }
       }
 
-      // Return previous token if the access token has not expired yet
+      // If we don't have a refresh token in the JWT, fetch it from the database
+      if (!token.refreshToken && token.user?.id) {
+        console.log("No refresh token in JWT. Fetching from database.");
+        const client = await clientPromise;
+        const db = client.db();
+        const accountData = await db.collection("accounts").findOne({
+          userId: token.user.id,
+          provider: "google"
+        });
+        
+        if (accountData?.refresh_token) {
+          token.refreshToken = accountData.refresh_token;
+        } else {
+          console.error("No refresh token found in database. User needs to re-authenticate.");
+          return { ...token, error: "RefreshTokenNotFound" };
+        }
+      }
+
+     
       if (Date.now() < token.accessTokenExpires) {
+       
         return token
       }
 
       // Access token has expired, try to update it
+      
       return refreshAccessToken(token)
     },
     async session({ session, token }) {

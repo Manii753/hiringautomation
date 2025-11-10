@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { DatePickerDemo } from "@/components/ui/datepicker";
+import { toast } from 'sonner';
 
 const CandidateList = () => {
   const [candidates, setCandidates] = useState([]);
@@ -65,7 +66,12 @@ const CandidateList = () => {
       setCandidates(data);
       setLoading(false);
     } catch (err) {
+
       setLoading(false);
+      if(err.status === 401) {
+        toast.error('Session expired. Please sign in again.');
+        signOut();
+      }
     }
   };
 
