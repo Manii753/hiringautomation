@@ -26,7 +26,7 @@ export default function RootLayout({ children }) {
           <div className="sticky top-0 z-50 bg-background shadow ">
             <Header />
           </div>
-          <main className="h-full bg-background text-foreground">
+          <main className=" bg-background text-foreground">
             {children}
             <Toaster />
           </main>

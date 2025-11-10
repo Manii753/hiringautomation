@@ -21,7 +21,7 @@ const CandidateListSkeleton = () => {
       {/* Table Skeleton */}
       <Card>
         <CardContent className="p-0">
-          <ScrollArea className="h-[calc(100vh-260px)] w-full overflow-x-auto">
+          <ScrollArea className="h-[calc(100vh-243px)] w-full overflow-x-auto">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-muted border-b">

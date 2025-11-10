@@ -68,8 +68,7 @@ const Header = () => {
       if (session?.user?.clickUpAccessToken) {
         setIsClickUpConnected(true);
         setClickUpAccessToken(session.user.clickUpAccessToken);
-        // Optionally, verify token on load if it exists
-        verifyClickUpToken(session.user.clickUpAccessToken);
+       
       }
     }
   

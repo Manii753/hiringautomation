@@ -189,7 +189,7 @@ const CandidateList = () => {
 
       <Card >
         <CardContent className="p-0">
-          <ScrollArea className="h-[calc(100vh-260px)] w-full overflow-x-auto ">
+          <ScrollArea className="h-[calc(100vh-243px)] w-full overflow-x-auto ">
             <table className=" w-full">
               <thead className="bg-muted border-b sticky top-0">
                 <tr>
@@ -242,9 +242,10 @@ const CandidateList = () => {
                         </td>
                         
 
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <td className="px-6 py-4 whitespace-nowrap text-right ">
                           <Button
                             variant="ghost"
+                            className={"cursor-pointer underline"}
                             size="sm"
                             onClick={() => router.push(`/candidate/${candidate.id}`)}
                           >
@@ -276,7 +277,7 @@ export default function App() {
 
   if (status === 'loading') {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-full">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -287,7 +288,7 @@ export default function App() {
   }
 
   return (
-    <div className="h-full bg-muted">
+    <div className="flex bg-muted">
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <CandidateList />
       </main>
