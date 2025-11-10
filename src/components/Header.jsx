@@ -32,6 +32,9 @@ import { ThemeToggle } from './ThemeToggle';
 
 
 
+import { toast } from 'sonner';
+
+
 const Header = () => {
   const { data: session, status, update } = useSession();
   const pathname = usePathname();
@@ -39,6 +42,8 @@ const Header = () => {
   const [slackChannelName, setSlackChannelName] = useState(session?.user?.slackChannel || '');
   const [showClickUpTokenDialog, setShowClickUpTokenDialog] = useState(false);
   const [clickUpAccessToken, setClickUpAccessToken] = useState(session?.user?.clickUpAccessToken || '');
+  const [clickUpUserInfo, setClickUpUserInfo] = useState(null);
+  const [clickUpConnectionStatus, setClickUpConnectionStatus] = useState('');
   
 
   // 🔹 Hide Header on /login page
@@ -63,10 +68,46 @@ const Header = () => {
       if (session?.user?.clickUpAccessToken) {
         setIsClickUpConnected(true);
         setClickUpAccessToken(session.user.clickUpAccessToken);
+        // Optionally, verify token on load if it exists
+        verifyClickUpToken(session.user.clickUpAccessToken);
       }
     }
   
   }, [session]);
+
+  const verifyClickUpToken = async (token) => {
+    if (!token) {
+      setClickUpConnectionStatus('Please enter a ClickUp access token.');
+      setClickUpUserInfo(null);
+      return false;
+    }
+    try {
+      const response = await fetch('https://api.clickup.com/api/v2/user', {
+        headers: {
+          'Authorization': token,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setClickUpUserInfo(data.user);
+        setClickUpConnectionStatus('Connected to ClickUp successfully!');
+        toast.success('ClickUp token verified successfully!');
+        return true;
+      } else {
+        const errorData = await response.json();
+        setClickUpUserInfo(null);
+        setClickUpConnectionStatus(`Failed to connect to ClickUp: ${errorData.err}`);
+        toast.error(`Failed to verify ClickUp token: ${errorData.err}`);
+        return false;
+      }
+    } catch (error) {
+      setClickUpUserInfo(null);
+      setClickUpConnectionStatus(`Error connecting to ClickUp: ${error.message}`);
+      toast.error(`Error verifying ClickUp token: ${error.message}`);
+      return false;
+    }
+  };
 
   const handleSaveSlackChannel = async () => {
     try {
@@ -100,14 +141,29 @@ const Header = () => {
       });
 
       if (response.ok) {
-        
-        setShowClickUpTokenDialog(false);
+        const isVerified = await verifyClickUpToken(clickUpAccessToken);
+        if (isVerified) {
+          setIsClickUpConnected(true);
+          setShowClickUpTokenDialog(false);
+        }
       } else {
         console.error('Failed to update ClickUp access token');
+        toast.error('Failed to save ClickUp access token to backend.');
       }
     } catch (error) {
       console.error('Error updating ClickUp access token:', error);
+      toast.error(`Error saving ClickUp access token: ${error.message}`);
     }
+  };
+
+  const handleTestClickUpConnection = async () => {
+    await verifyClickUpToken(clickUpAccessToken);
+  };
+
+  const handleEditClickUpToken = () => {
+    setIsClickUpConnected(false); // Allow editing
+    setClickUpUserInfo(null);
+    setClickUpConnectionStatus('');
   };
 
   return (
@@ -222,18 +278,39 @@ const Header = () => {
                           Enter your ClickUp personal access token. This token will be stored securely.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
-                      <div className="flex items-center border rounded-lg overflow-hidden">
+                      <div className="flex flex-col space-y-4">
                         <Input
-                          className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 "
+                          className="border rounded-lg p-2"
                           placeholder="ClickUp Access Token"
                           type="password"
                           value={clickUpAccessToken}
                           onChange={(e) => setClickUpAccessToken(e.target.value)}
+                          disabled={isClickUpConnected}
                         />
+                        {clickUpConnectionStatus && (
+                          <p className={`text-sm ${clickUpConnectionStatus.includes('successfully') ? 'text-green-500' : 'text-red-500'}`}>
+                            {clickUpConnectionStatus}
+                          </p>
+                        )}
+                        {clickUpUserInfo && (
+                          <div className="text-sm">
+                            <p><strong>User ID:</strong> {clickUpUserInfo.id}</p>
+                            <p><strong>Username:</strong> {clickUpUserInfo.username}</p>
+                            <p><strong>Email:</strong> {clickUpUserInfo.email}</p>
+                          </div>
+                        )}
                       </div>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleSaveClickUpToken}>Save</AlertDialogAction>
+                        {!isClickUpConnected && (
+                          <>
+                            <Button variant="outline" onClick={handleTestClickUpConnection}>Test Connection</Button>
+                            <AlertDialogAction onClick={handleSaveClickUpToken}>Save</AlertDialogAction>
+                          </>
+                        )}
+                        {isClickUpConnected && (
+                          <Button variant="outline" onClick={handleEditClickUpToken}>Edit Token</Button>
+                        )}
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
