@@ -4,11 +4,20 @@ import React, { useState, useEffect } from 'react';
 import { toast } from "sonner";
 import { useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft,  FileVideo,  Loader2, LucideFileVideo, Pencil, Maximize, X, RefreshCw } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { ArrowLeft,  FileVideo,  Loader2, LucideFileVideo, Pencil, Maximize, X, RefreshCw, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import CandidateDetailSkeleton from '@/components/candidateSkelton';
 import {
@@ -22,6 +31,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+
 
 
 const CandidateDetailPage = () => {
@@ -41,7 +51,28 @@ const CandidateDetailPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isNotesOverlayVisible, setIsNotesOverlayVisible] = useState(false);
   const [isReevaluating, setIsReevaluating] = useState(false);
-  const [jobPostion, setJobPostion] = useState('');
+  const [job, setJob] = useState(null);
+  const [isJobLoading, setIsJobLoading] = useState(false);
+  const [allJobs, setAllJobs] = useState([]);
+  const [isEditingJob, setIsEditingJob] = useState(false);
+
+
+  useEffect(() => {
+    const fetchAllJobs = async () => {
+      try {
+        const response = await fetch('/api/jobs');
+        if (response.ok) {
+          const { data } = await response.json();
+          setAllJobs(data);
+        } else {
+          console.error('Failed to fetch all jobs');
+        }
+      } catch (error) {
+        console.error('Error fetching all jobs:', error);
+      }
+    };
+    fetchAllJobs();
+  }, []);
 
 
   useEffect(() => {
@@ -58,6 +89,25 @@ const CandidateDetailPage = () => {
     
   }, [session]);
 
+  const setClickUpTaskId = async (jobName) => {
+    if (!jobName) return;
+    setIsJobLoading(true);
+    try {
+      const response = await fetch(`/api/job/find-by-name?jobName=${encodeURIComponent(jobName)}`);
+      if (response.ok) {
+        const data = await response.json();
+        setJob(data);
+      } else {
+        console.error('Failed to fetch job details');
+        setJob(null);
+      }
+    } catch (error) {
+      console.error('Error fetching job details:', error);
+      setJob(null);
+    }
+    setIsJobLoading(false);
+  }
+
   const fetchCandidateDetail = async () => {
     try {
       setLoading(true);
@@ -65,7 +115,11 @@ const CandidateDetailPage = () => {
       const data = await response.json();
       setCandidate(data);
       
-      setJobPostion(data.positionMatch || 'N/A'); 
+      if (data.positionMatch) {
+        setClickUpTaskId(data.positionMatch);
+      }
+
+
       
       
       if (data.webhookResponse) {
@@ -139,7 +193,7 @@ const CandidateDetailPage = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ webhookResponse, candidate ,candidateId ,slackChannel }),
+        body: JSON.stringify({ webhookResponse, candidate ,candidateId ,slackChannel ,job }),
       });
 
       if (response.ok) {
@@ -287,10 +341,60 @@ const CandidateDetailPage = () => {
               </div>
 
               
-              <div className='flex flex-col items-end' >
+              <div className='flex flex-col items-end space-y-1' >
                 <div className='flex items-center'>
                   <span className='text-muted-foreground text-xs text-center mr-2'>Slack Channel</span>
                   <Badge variant={"outline"} className={"h-8 w-fit flex"}> {session?.slackChannel} </Badge>
+                </div>
+
+                <div className='w-full'>
+                  {isJobLoading ? (
+                    <Card className="w-full">
+                        <CardHeader>
+                            <Skeleton className="h-6 w-32 mb-2" />
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                            <Skeleton className="h-4 w-48" />
+                            <Skeleton className="h-4 w-40" />
+                        </CardContent>
+                    </Card>
+                  ) : job && !isEditingJob ? (
+                      <Card className="w-full gap-0.5 p-2">
+                          <CardHeader className="flex flex-row items-center justify-between ">
+                              <CardTitle>Job Details</CardTitle>
+                              <Button variant="ghost" size="icon" onClick={() => setIsEditingJob(true)}>
+                                  <Pencil className="h-3 w-3" />
+                              </Button>
+                          </CardHeader>
+                          <CardContent>
+                              <p className="text-sm text-muted-foreground"><strong>Position:</strong> {job.name}</p>
+                              <p className="text-sm text-muted-foreground"><strong>ClickUp Task ID:</strong> {job.clickupTaskId}</p>
+                          </CardContent>
+                      </Card>
+                  ) : (
+                      <div className="w-full space-y-2">
+                          <p className="text-sm text-muted-foreground">
+                              {candidate.positionMatch ? `Job not found for the candidate. Select one below.` : 'Select a job.'}
+                          </p>
+                          <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                  <Button variant="outline" className="w-full justify-between">
+                                      <span>{job ? job.name : "Select a Job"}</span>
+                                      <ChevronDown className="h-4 w-4" />
+                                  </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+                                  <DropdownMenuLabel>Available Jobs</DropdownMenuLabel>
+                                  <DropdownMenuSeparator />
+                                  {allJobs.map((j) => (
+                                      <DropdownMenuItem key={j._id} onSelect={() => { setJob(j); setIsEditingJob(false); }}>
+                                          {j.name}
+                                      </DropdownMenuItem>
+                                  ))}
+                              </DropdownMenuContent>
+                          </DropdownMenu>
+                      </div>
+                  )}
                 </div>
                 {webhookResponse && (
                   <AlertDialog>

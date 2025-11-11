@@ -6,7 +6,7 @@ import User from '@/lib/models/User';
 
 export async function POST(request) {
   const session = await getServerSession(authOptions);
-  const clickUpTastId = "86ev7zreh";
+  
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -35,7 +35,6 @@ export async function POST(request) {
       },
       body: JSON.stringify({
         token: user.slackAccessToken, 
-        clickUpTastId,
         clickUpToken:user.clickUpAccessToken,
         data, 
       }),
