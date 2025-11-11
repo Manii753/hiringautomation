@@ -33,7 +33,9 @@ const CandidateList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [ownerFilter, setOwnerFilter] = useState("all");
+  const [positionFilter, setPositionFilter] = useState("all");
   const [owners, setOwners] = useState([]);
+  const [positions, setPositions] = useState([]);
   const [date, setDate] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: 'createdTime', direction: 'descending' });
   const router = useRouter();
@@ -51,6 +53,15 @@ const CandidateList = () => {
       return acc;
     }, []);
     setOwners(allOwners);
+
+    const allPositions = candidates.reduce((acc, candidate) => {
+      const positionName = extractJobPosition(candidate.name);
+      if (positionName && positionName !== "Not found" && !acc.includes(positionName)) {
+        acc.push(positionName);
+      }
+      return acc;
+    }, []);
+    setPositions(allPositions);
   }, [candidates]);
 
   function extractNameFromFileName(fileName) {
@@ -99,10 +110,12 @@ const CandidateList = () => {
     const status = candidate.appProperties?.status || "pending";
     const createdDate = new Date(candidate.createdTime);
     const owner = candidate.owners?.[0]?.displayName;
+    const position = extractJobPosition(candidate.name);
     return (
       (name.includes(searchTerm.toLowerCase())) &&
       (statusFilter === "all" || status === statusFilter) &&
       (ownerFilter === "all" || owner === ownerFilter) &&
+      (positionFilter === "all" || position === positionFilter) &&
       (!date || createdDate.toDateString() === date.toDateString())
     );
   });
@@ -173,6 +186,21 @@ const CandidateList = () => {
               {owners.map(owner => (
                 <DropdownMenuItem key={owner} onClick={() => setOwnerFilter(owner)}>
                   {owner}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">Filter by Position</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuLabel>Position</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setPositionFilter("all")}>All</DropdownMenuItem>
+              {positions.map(position => (
+                <DropdownMenuItem key={position} onClick={() => setPositionFilter(position)}>
+                  {position}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>

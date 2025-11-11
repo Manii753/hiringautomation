@@ -349,15 +349,17 @@ const CandidateDetailPage = () => {
 
                 <div className='w-full'>
                   {isJobLoading ? (
-                    <Card className="w-full">
-                        <CardHeader>
-                            <Skeleton className="h-6 w-32 mb-2" />
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                            <Skeleton className="h-4 w-48" />
-                            <Skeleton className="h-4 w-40" />
-                        </CardContent>
+                    <Card className="w-full gap-0.5 p-2">
+                      <CardHeader className="flex flex-row items-center justify-between">
+                        <Skeleton className="h-6 w-28" /> 
+                        <Skeleton className="h-3 w-3 rounded-full" /> 
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <Skeleton className="h-4 w-40" /> 
+                        <Skeleton className="h-4 w-48" /> 
+                      </CardContent>
                     </Card>
+
                   ) : job && !isEditingJob ? (
                       <Card className="w-full gap-0.5 p-2">
                           <CardHeader className="flex flex-row items-center justify-between ">
