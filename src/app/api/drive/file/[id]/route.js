@@ -36,7 +36,17 @@ async function getFileContent(drive, fileId, mimeType) {
     return buffer.toString("utf-8");
   }
 }
+function extractJobPosition(filename) {
+  // Check for VinAudit or AutoScale (case-insensitive)
+  if (/vinaudit|autoscale/i.test(filename)) {
+    return "Not found";
+  }
 
+  // Match everything before " Interview ("
+  const match = filename.match(/^(.*?)\s+Interview\s*\(/i);
+  return match ? match[1].trim() : "Not found";
+}
+  
 function parseFileContent(content, fileName = "") {
   const nameMatch = fileName.match(/\(([^)]+)\)/);
   const dateMatch = fileName.match(/(\d{4})[\/\-_](\d{2})[\/\-_](\d{2})/);
@@ -44,6 +54,7 @@ function parseFileContent(content, fileName = "") {
   const companyMatch = fileName.match(/^(.*?)\s*[_-]/);
   const emailMatch = content.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
   const summaryMatch = content.match(/Summary([\s\S]*?)(?=Details|Professional|$)/i);
+  const positionMatch = extractJobPosition(fileName);
 
   const interviewDate = dateMatch
     ? `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}`
@@ -56,6 +67,7 @@ function parseFileContent(content, fileName = "") {
   return {
     candidateName: nameMatch ? nameMatch[1].trim() : "Unknown",
     company: companyMatch ? companyMatch[1].trim() : "Unknown",
+    positionMatch: positionMatch,
     email: emailMatch ? emailMatch[0] : "Unknown",
     interviewDate,
     interviewTime,

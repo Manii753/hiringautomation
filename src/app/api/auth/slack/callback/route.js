@@ -49,7 +49,7 @@ export async function GET(request) {
     const { authed_user, team } = data;
     const access_token = data.authed_user.access_token;
     
-    session.user.slackAccessToken = access_token;
+    
 
 
     await dbConnect();
@@ -66,6 +66,8 @@ export async function GET(request) {
     const baseUrl = process.env.NEXTAUTH_URL
     const redirectUrl = candidateId === 'home' ? `${baseUrl}/` : `${baseUrl}/candidate/${candidateId}`;
 
+    
+    
     // Redirect user to the candidate page or a success page
     return NextResponse.redirect(redirectUrl);
 

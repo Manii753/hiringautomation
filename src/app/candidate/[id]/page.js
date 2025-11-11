@@ -41,6 +41,7 @@ const CandidateDetailPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isNotesOverlayVisible, setIsNotesOverlayVisible] = useState(false);
   const [isReevaluating, setIsReevaluating] = useState(false);
+  const [jobPostion, setJobPostion] = useState('');
 
 
   useEffect(() => {
@@ -63,7 +64,10 @@ const CandidateDetailPage = () => {
       const response = await fetch(`/api/drive/file/${candidateId}`);
       const data = await response.json();
       setCandidate(data);
-      console.log(data);
+      
+      setJobPostion(data.positionMatch || 'N/A'); 
+      
+      
       if (data.webhookResponse) {
         setWebhookResponse(data.webhookResponse);
         setEditedWebhookResponse(data.webhookResponse);
@@ -107,7 +111,7 @@ const CandidateDetailPage = () => {
       });
 
       if (response.ok) {
-        const data = await response.json();
+        const data = await response.json();                                                                                                                                                                                                                                                                                              
         setCandidate(prev => ({...prev, status: status, appProperties: {...prev.appProperties, status: status}}));
         if(data.webhookData) {
             setWebhookResponse(data.webhookData);
@@ -275,6 +279,9 @@ const CandidateDetailPage = () => {
                   </Badge>
                   <Badge variant={"outline"} className={"mt-2 h-8 w-fit flex items-center justify-center"}> {candidate.interviewTime} </Badge>
                 </div> 
+                <div className='mt-2 mb-2'>
+                  <span className='text-foreground text-md text-center'>Job Position :<Badge variant={"outline"} className={" h-8 w-fit ml-1 items-center justify-center"}  > {candidate.positionMatch} </Badge></span>
+                </div>
                 <Badge variant={candidate.appProperties?.status === 'pass' ? "green" : candidate.appProperties?.status === 'fail' ? "destructive" : "default"} className="mt-2 h-8 w-fit flex items-center justify-center">{candidate.appProperties?.status || 'pending'}</Badge>
                 
               </div>

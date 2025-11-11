@@ -17,7 +17,7 @@ export async function POST(request) {
 
   try {
     const { clickUpAccessToken } = await request.json();
-    console.log(clickUpAccessToken);
+    
 
     if (!clickUpAccessToken) {
       return NextResponse.json({ error: 'ClickUp access token is required' }, { status: 400 });
@@ -32,7 +32,7 @@ export async function POST(request) {
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
-    session.user.clickUpAccessToken = clickUpAccessToken;
+    
 
     return NextResponse.json({ message: 'ClickUp access token successfully', user: user });
     

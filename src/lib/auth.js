@@ -2,6 +2,7 @@ import GoogleProvider from "next-auth/providers/google";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import clientPromise from "@/lib/mongodb";
 import User from "./models/User";
+import dbConnect from "./dbConnect";
 
 async function refreshAccessToken(token) {
   try {
@@ -18,7 +19,7 @@ async function refreshAccessToken(token) {
     })
 
     const refreshedTokens = await response.json()
-    console.log("refreshedTokens", refreshedTokens)
+    
     if (!response.ok) throw refreshedTokens
 
     return {
@@ -116,7 +117,7 @@ export const authOptions = {
       session.accessToken = token.accessToken
       session.error = token.error
       session.slackChannel = token.slackChannel
-
+      
       return session
     }
   },

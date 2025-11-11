@@ -44,12 +44,6 @@ const Header = () => {
   const [clickUpAccessToken, setClickUpAccessToken] = useState(session?.user?.clickUpAccessToken || '');
   const [clickUpUserInfo, setClickUpUserInfo] = useState(null);
   const [clickUpConnectionStatus, setClickUpConnectionStatus] = useState('');
-  
-
-  // 🔹 Hide Header on /login page
-  if (pathname === '/login') return null;
-  
-
   const [isSlackConnected,setSlackConnected]=useState(false);
   const [isClickUpConnected, setIsClickUpConnected] = useState(false);
   const candidateId = pathname.startsWith('/candidate/') ? pathname.split('/')[2] : 'home';
