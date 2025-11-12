@@ -52,11 +52,11 @@ const Header = () => {
 
     useEffect(() => {
     const refreshSessionAfterOAuth = async () => {
-      // Check if we just came back from an OAuth flow
+      
       const oauthSuccess = searchParams.get('oauth') === 'success';
       
       if (oauthSuccess && status === 'authenticated') {
-        toast.info('OAuth redirect detected, refreshing session...');
+        
         
         // Show a loading toast
         toast.loading('Updating connection status...');
