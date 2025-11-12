@@ -3,7 +3,8 @@ import { Providers } from "./providers";
 import "./globals.css";
 import Header from "@/components/Header";
 import { Toaster } from "@/components/ui/sonner";
-
+import { Suspense } from "react";
+import HeaderSkeleton from "@/components/HeaderSkelton";
 
 
 
@@ -31,7 +32,10 @@ export default function RootLayout({ children }) {
         <Providers>
           
           <div className="sticky top-0 z-50 bg-background shadow ">
-            <Header />
+            <Suspense fallback={<HeaderSkeleton/>}>
+              <Header />
+            </Suspense>
+            
           </div>
           <main className="bg-background text-foreground">
             {children}
