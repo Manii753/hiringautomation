@@ -98,7 +98,7 @@ const CandidateDetailPage = () => {
         const data = await response.json();
         setJob(data);
       } else {
-        console.error('Failed to fetch job details');
+        toast.warning('Candidate Job not found Set it Manually.');
         setJob(null);
       }
     } catch (error) {

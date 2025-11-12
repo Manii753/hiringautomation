@@ -84,7 +84,7 @@ export const authOptions = {
 
       // If trigger is 'update', fetch fresh user data from database
       if (trigger === "update" && token.user?.id) {
-        console.log("Session update triggered. Fetching fresh user data.");
+        
         try {
           await dbConnect();
           const freshUser = await User.findById(token.user.id).lean();
