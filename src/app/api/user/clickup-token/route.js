@@ -33,7 +33,6 @@ export async function POST(request) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
     
-    console.log("user after adding accesstken",user);
     return NextResponse.json({ message: 'ClickUp access token added successfully', user: user });
     
   } catch (error) {
