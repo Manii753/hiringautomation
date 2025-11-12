@@ -52,9 +52,7 @@ export const authOptions = {
   ],
   session: { strategy: "jwt" },
   callbacks: {
-    async jwt({ token, user, account }) {
-      
-
+    async jwt({ token, user, account, trigger }) {
       // Initial sign in
       if (account && user) {
         console.log("Initial sign in. Storing new tokens.");
@@ -84,6 +82,26 @@ export const authOptions = {
         }
       }
 
+      // If trigger is 'update', fetch fresh user data from database
+      if (trigger === "update" && token.user?.id) {
+        console.log("Session update triggered. Fetching fresh user data.");
+        try {
+          await dbConnect();
+          const freshUser = await User.findById(token.user.id).lean();
+          
+          if (freshUser) {
+            token.user = {
+              ...token.user,
+              ...freshUser,
+              id: freshUser._id.toString(),
+            };
+            token.slackChannel = freshUser.slackChannel;
+          }
+        } catch (error) {
+          console.error("Error fetching fresh user data:", error);
+        }
+      }
+
       // If we don't have a refresh token in the JWT, fetch it from the database
       if (!token.refreshToken && token.user?.id) {
         console.log("No refresh token in JWT. Fetching from database.");
@@ -102,17 +120,14 @@ export const authOptions = {
         }
       }
 
-     
       if (Date.now() < token.accessTokenExpires) {
-       
         return token
       }
 
       // Access token has expired, try to update it
-      
       return refreshAccessToken(token)
     },
-    async session({ session, token }) {
+    async session({ session, token  }) {
       session.user = token.user
       session.accessToken = token.accessToken
       session.error = token.error

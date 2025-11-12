@@ -3,7 +3,7 @@
 import { useSession, signOut } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { Separator } from "@/components/ui/separator"
 import {
   DropdownMenu,
@@ -36,8 +36,10 @@ import { toast } from 'sonner';
 
 
 const Header = () => {
+  
   const { data: session, status, update } = useSession();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [showSlackChannelDialog, setShowSlackChannelDialog] = useState(false);
   const [slackChannelName, setSlackChannelName] = useState(session?.user?.slackChannel || '');
   const [showClickUpTokenDialog, setShowClickUpTokenDialog] = useState(false);
@@ -48,10 +50,40 @@ const Header = () => {
   const [isClickUpConnected, setIsClickUpConnected] = useState(false);
   const candidateId = pathname.startsWith('/candidate/') ? pathname.split('/')[2] : 'home';
 
-  
+    useEffect(() => {
+    const refreshSessionAfterOAuth = async () => {
+      // Check if we just came back from an OAuth flow
+      const oauthSuccess = searchParams.get('oauth') === 'success';
+      
+      if (oauthSuccess && status === 'authenticated') {
+        toast.info('OAuth redirect detected, refreshing session...');
+        
+        // Show a loading toast
+        toast.loading('Updating connection status...');
+        
+        try {
+          await update();
+          toast.dismiss();
+          toast.success('Connection updated successfully!');
+        } catch (error) {
+          toast.dismiss();
+          toast.error('Failed to update session');
+          console.error('Error updating session:', error);
+        }
+        
+        // Clean up URL parameters
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('oauth');
+        window.history.replaceState({}, '', newUrl.toString());
+      }
+    };
+
+    refreshSessionAfterOAuth();
+  }, [searchParams, status, update]);
   useEffect(() => {
   
     if (session) {
+      
       if (session?.user?.slackAccessToken) {
         setSlackConnected(true);
         
@@ -115,6 +147,7 @@ const Header = () => {
       if (response.ok) {
         
         setShowSlackChannelDialog(false);
+        await update();
       } else {
         console.error('Failed to update Slack channel');
       }
@@ -138,7 +171,9 @@ const Header = () => {
         if (isVerified) {
           setIsClickUpConnected(true);
           setShowClickUpTokenDialog(false);
+
         }
+        await update();
       } else {
         console.error('Failed to update ClickUp access token');
         toast.error('Failed to save ClickUp access token to backend.');

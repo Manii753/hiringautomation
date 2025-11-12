@@ -64,7 +64,9 @@ export async function GET(request) {
     );
 
     const baseUrl = process.env.NEXTAUTH_URL
-    const redirectUrl = candidateId === 'home' ? `${baseUrl}/` : `${baseUrl}/candidate/${candidateId}`;
+    const redirectUrl = candidateId === 'home' 
+      ? `${baseUrl}/?oauth=success` 
+      : `${baseUrl}/candidate/${candidateId}?oauth=success`;
 
     
     
