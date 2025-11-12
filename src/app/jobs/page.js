@@ -168,7 +168,11 @@ export default function JobsPage() {
 
   return (
     <div className="container mx-auto py-10">
-      {/* ... existing code ... */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Jobs</h1>
+        <Button onClick={() => setShowNewJobDialog(true)}>Create New Job</Button>
+      </div>
+
       {loading ? (
         <JobSkeleton />
       ) : jobs.length > 0 ? (
@@ -200,6 +204,47 @@ export default function JobsPage() {
           <p>No jobs found. Create a new one to get started!</p>
         </div>
       )}
+
+      <AlertDialog open={showNewJobDialog} onOpenChange={setShowNewJobDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Create New Job</AlertDialogTitle>
+          </AlertDialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-muted-foreground mb-1">
+                Job Name
+              </label>
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g., Software Engineer"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="clickupTaskId" className="block text-sm font-medium text-muted-foreground mb-1">
+                ClickUp Task ID
+              </label>
+              <Input
+                id="clickupTaskId"
+                value={clickupTaskId}
+                onChange={(e) => setClickupTaskId(e.target.value)}
+                placeholder="e.g., 123456"
+                required
+              />
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setShowNewJobDialog(false)}>Cancel</AlertDialogCancel>
+              <Button type="submit" disabled={formLoading}>
+                {formLoading ? 'Creating...' : 'Create Job'}
+              </Button>
+            </AlertDialogFooter>
+          </form>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
