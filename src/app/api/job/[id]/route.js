@@ -4,12 +4,12 @@ import dbConnect from '@/lib/dbConnect';
 import Job from '@/lib/models/Job';
 
 export async function PUT(request, { params }) {
-  const { id } = params;
+  const { id } = await params;
   await dbConnect();
 
   try {
-    const { name, clickupTaskId } = await request.json();
-    const updatedJob = await Job.findByIdAndUpdate(id, { name, clickupTaskId }, { new: true });
+    const { name, clickupTaskId, mentions, prompt} = await request.json();
+    const updatedJob = await Job.findByIdAndUpdate(id, { name, clickupTaskId , mentions , prompt}, { new: true });
 
     if (!updatedJob) {
       return NextResponse.json({ success: false, error: 'Job not found' }, { status: 404 });

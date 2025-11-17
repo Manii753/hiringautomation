@@ -17,8 +17,10 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { TagsInput } from '@/components/ui/tags-input';
 
 export default function JobsPage() {
   const [jobs, setJobs] = useState([]);
@@ -26,6 +28,8 @@ export default function JobsPage() {
   const [showNewJobDialog, setShowNewJobDialog] = useState(false);
   const [name, setName] = useState('');
   const [clickupTaskId, setClickupTaskId] = useState('');
+  const [mentions, setMentions] = useState([]);
+  const [prompt, setPrompt] = useState('');
   const [formLoading, setFormLoading] = useState(false);
 
   const fetchJobs = async () => {
@@ -56,7 +60,7 @@ export default function JobsPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, clickupTaskId }),
+        body: JSON.stringify({ name, clickupTaskId, mentions: mentions.join(','), prompt }),
       });
 
       const data = await response.json();
@@ -86,6 +90,8 @@ export default function JobsPage() {
   const [jobToEdit, setJobToEdit] = useState(null);
   const [editedName, setEditedName] = useState('');
   const [editedClickupTaskId, setEditedClickupTaskId] = useState('');
+  const [editedMentions, setEditedMentions] = useState([]);
+  const [editedPrompt, setEditedPrompt] = useState('');
 
   const handleUpdate = async (e) => {
     e.preventDefault();
@@ -98,7 +104,7 @@ export default function JobsPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name: editedName, clickupTaskId: editedClickupTaskId }),
+        body: JSON.stringify({ name: editedName, clickupTaskId: editedClickupTaskId, mentions: editedMentions.join(','), prompt: editedPrompt }),
       });
 
       const data = await response.json();
@@ -129,6 +135,8 @@ export default function JobsPage() {
     setJobToEdit(job);
     setEditedName(job.name);
     setEditedClickupTaskId(job.clickupTaskId);
+    setEditedMentions(job.mentions ? job.mentions.split(',') : []);
+    setEditedPrompt(job.prompt || '');
     setShowEditDialog(true);
   };
 
@@ -184,6 +192,11 @@ export default function JobsPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">ClickUp Task ID: <Badge>{job.clickupTaskId}</Badge></p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {job.mentions?.split(',').map((mention, index) => (
+                    <Badge key={index} variant="secondary">{mention.trim()}</Badge>
+                  ))}
+                </div>
                 <div className="flex justify-end space-x-2 mt-4">
                   <Button variant="outline" size="icon" onClick={() => openEditDialog(job)}>
                     <Pencil className="h-4 w-4" />
@@ -235,6 +248,27 @@ export default function JobsPage() {
                 required
               />
             </div>
+            <div>
+              <label htmlFor="mentions" className="block text-sm font-medium text-muted-foreground mb-1">
+                Slack Mentions
+              </label>
+              <TagsInput
+                id="mentions"
+                value={mentions}
+                onChange={setMentions}
+              />
+            </div>
+            <div>
+              <label htmlFor="prompt" className="block text-sm font-medium text-muted-foreground mb-1">
+                Prompt
+              </label>
+              <Textarea
+                id="prompt"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="e.g., Generate a summary for the candidate"
+              />
+            </div>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => setShowNewJobDialog(false)}>Cancel</AlertDialogCancel>
               <Button type="submit" disabled={formLoading}>
@@ -273,6 +307,27 @@ export default function JobsPage() {
                 onChange={(e) => setEditedClickupTaskId(e.target.value)}
                 placeholder="e.g., 123456"
                 required
+              />
+            </div>
+            <div>
+              <label htmlFor="editedMentions" className="block text-sm font-medium text-muted-foreground mb-1">
+                Slack Mentions
+              </label>
+              <TagsInput
+                id="editedMentions"
+                value={editedMentions}
+                onChange={setEditedMentions}
+              />
+            </div>
+            <div>
+              <label htmlFor="editedPrompt" className="block text-sm font-medium text-muted-foreground mb-1">
+                Prompt
+              </label>
+              <Textarea
+                id="editedPrompt"
+                value={editedPrompt}
+                onChange={(e) => setEditedPrompt(e.target.value)}
+                placeholder="e.g., Generate a summary for the candidate"
               />
             </div>
             <AlertDialogFooter>

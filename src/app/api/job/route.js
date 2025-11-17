@@ -7,7 +7,7 @@ export async function POST(request) {
   await dbConnect();
 
   try {
-    const { name, clickupTaskId } = await request.json();
+    const { name, clickupTaskId , mentions , prompt} = await request.json();
 
     if (!name || !clickupTaskId) {
       return NextResponse.json({ success: false, error: 'Name and ClickUp Task ID are required' }, { status: 400 });
@@ -19,7 +19,7 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Job with the same Name or ClickUp Task ID already exists' }, { status: 409 });
     }
 
-    const newJob = new Job({ name, clickupTaskId });
+    const newJob = new Job({ name, clickupTaskId , mentions , prompt});
     await newJob.save();
 
     return NextResponse.json({ success: true, data: newJob });

@@ -10,6 +10,12 @@ const JobSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
+  },
+  mentions:{
+    type: String,
+  },
+  prompt:{
+    type: String, 
   }, 
 }, {
   timestamps: true,
