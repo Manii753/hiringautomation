@@ -496,14 +496,65 @@ const CandidateDetailPage = () => {
                         {isEditing ? (
                           <>
                             {Object.entries(editedWebhookResponse).map(([key, value]) => (
-                              <div key={key}>
+                                <div key={key}>
                                 <h3 className="font-semibold text-foreground capitalize">{key.replace(/_/g, ' ')}</h3>
-                                <Textarea
-                                  value={value}
-                                  onChange={(e) => handleWebhookResponseChange(key, e.target.value)}
-                                  className="mt-1 min-h-[100px]"
-                                />
-                              </div>
+                                {
+                                    Array.isArray(value)
+                                    ? value.map((item, index) => (
+                                        <div key={index} className="pl-4 mt-2 border-l-2 space-y-2">
+                                          <h4 className="font-medium">Item {index + 1}</h4>
+                                          {typeof item === 'object' && item !== null
+                                            ? Object.entries(item).map(([itemKey, itemValue]) => (
+                                                <div key={itemKey}>
+                                                  <label className="text-sm font-medium capitalize">{itemKey.replace(/_/g, ' ')}</label>
+                                                  <Textarea
+                                                    value={String(itemValue)}
+                                                    onChange={(e) => {
+                                                      const newItem = { ...item, [itemKey]: e.target.value };
+                                                      const newArray = [...value];
+                                                      newArray[index] = newItem;
+                                                      handleWebhookResponseChange(key, newArray);
+                                                    }}
+                                                    className="mt-1"
+                                                  />
+                                                </div>
+                                              ))
+                                            : <Textarea value={String(item)} onChange={(e) => {
+                                                const newArray = [...value];
+                                                newArray[index] = e.target.value;
+                                                handleWebhookResponseChange(key, newArray);
+                                              }} />
+                                          }
+                                        </div>
+                                      ))
+                                    : typeof value === 'object' && value !== null
+                                    ? (
+                                        <div className="space-y-2 pl-4">
+                                        {Object.entries(value).map(([subKey, subValue]) => (
+                                            <div key={subKey}>
+                                            <label className="text-sm font-medium capitalize">{subKey.replace(/_/g, ' ')}</label>
+                                            <Textarea
+                                                value={String(subValue)}
+                                                onChange={(e) => {
+                                                const newSubValue = e.target.value;
+                                                const newParentValue = { ...value, [subKey]: newSubValue };
+                                                handleWebhookResponseChange(key, newParentValue);
+                                                }}
+                                                className="mt-1"
+                                            />
+                                            </div>
+                                        ))}
+                                        </div>
+                                    )
+                                    : (
+                                        <Textarea
+                                            value={String(value)}
+                                            onChange={(e) => handleWebhookResponseChange(key, e.target.value)}
+                                            className="mt-1 min-h-[100px]"
+                                        />
+                                    )
+                                }
+                                </div>
                             ))}
                             <div className="flex space-x-2 justify-end">
                               <Button variant="ghost" onClick={handleCancel} disabled={isSaving}>Cancel</Button>
@@ -518,7 +569,33 @@ const CandidateDetailPage = () => {
                             {Object.entries(webhookResponse).map(([key, value]) => (
                               <div key={key}>
                                 <h3 className="font-semibold text-foreground capitalize">{key.replace(/_/g, ' ')}</h3>
-                                <p className="text-muted-foreground whitespace-pre-wrap">{value}</p>
+                                {
+                                  Array.isArray(value) ? (
+                                    value.map((item, index) => (
+                                      <div key={index} className="pl-4 mt-2 border-l-2">
+                                        {typeof item === 'object' && item !== null ? (
+                                          Object.entries(item).map(([itemKey, itemValue]) => (
+                                            <div key={itemKey} className="flex gap-2">
+                                              <strong className="capitalize w-1/4">{itemKey.replace(/_/g, ' ')}:</strong>
+                                              <p className="text-muted-foreground whitespace-pre-wrap w-3/4">{String(itemValue)}</p>
+                                            </div>
+                                          ))
+                                        ) : (
+                                          <p className="text-muted-foreground whitespace-pre-wrap">{String(item)}</p>
+                                        )}
+                                      </div>
+                                    ))
+                                  ) : typeof value === 'object' && value !== null ? (
+                                    Object.entries(value).map(([subKey, subValue]) => (
+                                      <div key={subKey} className="flex gap-2">
+                                        <strong className="capitalize w-1/4">{subKey.replace(/_/g, ' ')}:</strong>
+                                        <p className="text-muted-foreground whitespace-pre-wrap w-3/4">{String(subValue)}</p>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <p className="text-muted-foreground whitespace-pre-wrap">{String(value)}</p>
+                                  )
+                                }
                               </div>
                             ))}
                             <div className="space-y-2">
