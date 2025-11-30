@@ -19,7 +19,7 @@ export async function POST(request) {
   }
 
   const body = await request.json();
-  const { id: fileId, status, managerComment, ...candidateData } = body;
+  const { id: fileId, status, managerComment,job, ...candidateData } = body;
 
   if (!fileId || !status) {
     return NextResponse.json({ error: 'Missing fileId or status' }, { status: 400 });
@@ -37,7 +37,7 @@ export async function POST(request) {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ ...candidateData, status, managerComment }),
+      body: JSON.stringify({ ...candidateData, status, job, managerComment }),
     });
 
     if (!webhookResponse.ok) {

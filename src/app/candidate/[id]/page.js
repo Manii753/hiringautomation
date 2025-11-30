@@ -158,6 +158,7 @@ const CandidateDetailPage = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          job: job,
           ...candidate,
           status: status,
           managerComment: managerComment,
