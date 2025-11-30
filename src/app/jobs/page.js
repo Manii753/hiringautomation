@@ -263,6 +263,7 @@ export default function JobsPage() {
                 Prompt
               </label>
               <Textarea
+                className="min-h-36 max-h-80 scroll-auto"
                 id="prompt"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
@@ -324,6 +325,7 @@ export default function JobsPage() {
                 Prompt
               </label>
               <Textarea
+                className="min-h-36 max-h-80 scroll-auto"
                 id="editedPrompt"
                 value={editedPrompt}
                 onChange={(e) => setEditedPrompt(e.target.value)}
