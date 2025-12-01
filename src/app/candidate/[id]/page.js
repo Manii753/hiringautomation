@@ -606,7 +606,7 @@ const CandidateDetailPage = () => {
                                   className="w-full mt-4"
                               >
                                   {isSendingToSlack ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                  Send to Slack
+                                  Send Notes
                               </Button>
                             </div>
                           </>

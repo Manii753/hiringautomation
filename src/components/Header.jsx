@@ -201,11 +201,11 @@ const Header = () => {
           <div className="flex items-center space-x-4">
             <Link href="/">
               <h1 className="text-xl cursor-pointer font-semibold">
-                Hiring Manager Dashboard
+                AURA
               </h1>
             </Link>
             <p className="text-xs text-muted-foreground mt-1">
-              Powered by n8n Automation
+              AutoScale Unified Recruiting Assistant
             </p>
           </div>
 

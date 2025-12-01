@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Hiring Automation",
+  title: "AURA - AutoScale Unified Recruiting Assistant",
 };
 
 export default function RootLayout({ children }) {
