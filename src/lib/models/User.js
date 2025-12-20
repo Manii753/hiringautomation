@@ -14,6 +14,9 @@ const UserSchema = new mongoose.Schema({
     type: String,
     
   },
+  manatalAccessToken: {
+    type: String,
+  },
   image: String,
   slackAccessToken: String, 
   

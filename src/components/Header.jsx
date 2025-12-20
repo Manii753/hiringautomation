@@ -48,6 +48,11 @@ const Header = () => {
   const [clickUpConnectionStatus, setClickUpConnectionStatus] = useState('');
   const [isSlackConnected,setSlackConnected]=useState(false);
   const [isClickUpConnected, setIsClickUpConnected] = useState(false);
+  const [showManatalTokenDialog, setShowManatalTokenDialog] = useState(false);
+  const [manatalAccessToken, setManatalAccessToken] = useState(session?.user?.manatalAccessToken || '');
+  const [manatalOrgInfo, setManatalOrgInfo] = useState(null);
+  const [manatalConnectionStatus, setManatalConnectionStatus] = useState('');
+  const [isManatalConnected, setIsManatalConnected] = useState(false);
   const candidateId = pathname.startsWith('/candidate/') ? pathname.split('/')[2] : 'home';
 
     useEffect(() => {
@@ -95,6 +100,11 @@ const Header = () => {
         setIsClickUpConnected(true);
         setClickUpAccessToken(session.user.clickUpAccessToken);
         verifyClickUpToken(session.user.clickUpAccessToken);
+      }
+      if (session?.user?.manatalAccessToken) {
+        setIsManatalConnected(true);
+        setManatalAccessToken(session.user.manatalAccessToken);
+        verifyManatalToken(session.user.manatalAccessToken);
       }
     }
   
@@ -192,6 +202,84 @@ const Header = () => {
     setIsClickUpConnected(false); // Allow editing
     setClickUpUserInfo(null);
     setClickUpConnectionStatus('');
+  };
+
+  const verifyManatalToken = async (token) => {
+    if (!token) {
+      setManatalConnectionStatus('Please enter a Manatal access token.');
+      setManatalOrgInfo(null);
+      return false;
+    }
+    try {
+      const response = await fetch('https://api.manatal.com/open/v3/organizations/', {
+        headers: {
+          'Authorization': `Token ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.results && data.results.length > 0) {
+          setManatalOrgInfo(data.results[0]);
+          setManatalConnectionStatus('Connected to Manatal successfully!');
+          return true;
+        } else {
+          setManatalOrgInfo(null);
+          setManatalConnectionStatus('Failed to connect to Manatal: No organizations found.');
+          toast.error('Manatal token is valid, but no organizations were found.');
+          return false;
+        }
+      } else {
+        const errorData = await response.json();
+        setManatalOrgInfo(null);
+        const errorMessage = errorData.detail || (typeof errorData === 'string' ? errorData : 'Unknown error');
+        setManatalConnectionStatus(`Failed to connect to Manatal: ${errorMessage}`);
+        toast.error(`Failed to verify Manatal token: ${errorMessage}`);
+        return false;
+      }
+    } catch (error) {
+      setManatalOrgInfo(null);
+      setManatalConnectionStatus(`Error connecting to Manatal: ${error.message}`);
+      toast.error(`Error verifying Manatal token: ${error.message}`);
+      return false;
+    }
+  };
+
+  const handleSaveManatalToken = async () => {
+    try {
+      const response = await fetch('/api/user/manatal-token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ manatalAccessToken: manatalAccessToken }),
+      });
+
+      if (response.ok) {
+        const isVerified = await verifyManatalToken(manatalAccessToken);
+        if (isVerified) {
+          setIsManatalConnected(true);
+          setShowManatalTokenDialog(false);
+        }
+        await update();
+      } else {
+        console.error('Failed to update Manatal access token');
+        toast.error('Failed to save Manatal access token to backend.');
+      }
+    } catch (error) {
+      console.error('Error updating Manatal access token:', error);
+      toast.error(`Error saving Manatal access token: ${error.message}`);
+    }
+  };
+
+  const handleTestManatalConnection = async () => {
+    await verifyManatalToken(manatalAccessToken);
+  };
+
+  const handleEditManatalToken = () => {
+    setIsManatalConnected(false); // Allow editing
+    setManatalOrgInfo(null);
+    setManatalConnectionStatus('');
   };
 
   return (
@@ -338,6 +426,73 @@ const Header = () => {
                         )}
                         {isClickUpConnected && (
                           <Button variant="outline" onClick={handleEditClickUpToken}>Edit Token</Button>
+                        )}
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                  <AlertDialog open={showManatalTokenDialog} onOpenChange={setShowManatalTokenDialog}>
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                      {!isManatalConnected ? (
+                        <AlertDialogTrigger asChild>
+                          <div className='flex items-center w-full justify-between cursor-pointer'>
+                            <div className='flex items-center justify-center'>
+                              <img src="/manatal.svg" alt="Manatal" className="w-5.5 h-5.5 mr-1 bg-transparent -translate-x-1" />
+                              Manatal 
+                            </div>
+                            <AlertTriangle className="w-4 h-4 ml-2 text-yellow-500" />
+                          </div>
+                        </AlertDialogTrigger>
+                      ) : (
+                        <AlertDialogTrigger asChild>
+                          <div className='flex items-center w-full justify-between cursor-pointer'>
+                            <div className='flex items-center justify-center'>
+                              <img src="/manatal.svg" alt="Manatal" className="w-5.5 h-5.5 mr-1 bg-transparent -translate-x-1" />
+                              Manatal
+                            </div>
+                            <Badge variant="green" className="text-[9px]">Connected</Badge>
+                          </div>
+                        </AlertDialogTrigger>
+                      )}
+                    </DropdownMenuItem>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Set Manatal Access Token</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Enter your Manatal API token. This token will be stored securely.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <div className="flex flex-col space-y-4">
+                        <Input
+                          className="border rounded-lg p-2"
+                          placeholder="Manatal Access Token"
+                          type="password"
+                          value={manatalAccessToken}
+                          onChange={(e) => setManatalAccessToken(e.target.value)}
+                          disabled={isManatalConnected}
+                        />
+                        {manatalConnectionStatus && (
+                          <p className={`text-sm ${manatalConnectionStatus.includes('successfully') ? 'text-green-500' : 'text-red-500'}`}>
+                            {manatalConnectionStatus}
+                          </p>
+                        )}
+                        {manatalOrgInfo && (
+                          <div className="text-sm">
+                            <p><strong>Organization Name:</strong> {manatalOrgInfo.name}</p>
+                            {manatalOrgInfo.website && <p><strong>Website:</strong> {manatalOrgInfo.website}</p>}
+                            {manatalOrgInfo.country && <p><strong>Country:</strong> {manatalOrgInfo.country}</p>}
+                          </div>
+                        )}
+                      </div>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        {!isManatalConnected && (
+                          <>
+                            <Button variant="outline" onClick={handleTestManatalConnection}>Test Connection</Button>
+                            <AlertDialogAction onClick={handleSaveManatalToken}>Save</AlertDialogAction>
+                          </>
+                        )}
+                        {isManatalConnected && (
+                          <Button variant="outline" onClick={handleEditManatalToken}>Edit Token</Button>
                         )}
                       </AlertDialogFooter>
                     </AlertDialogContent>
