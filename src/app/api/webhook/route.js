@@ -40,6 +40,8 @@ export async function POST(request) {
       body: JSON.stringify({ ...candidateData, status, job, managerComment }),
     });
 
+    console.log("-------------------backend response-------------------", webhookResponse);
+
     if (!webhookResponse.ok) {
       // Log n8n error, but don't fail the whole request
       console.error('Failed to send data to n8n webhook:', await webhookResponse.text());

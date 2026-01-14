@@ -17,7 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ArrowLeft,  FileVideo,  Loader2, LucideFileVideo, Pencil, Maximize, X, RefreshCw, ChevronDown } from 'lucide-react';
+import { ArrowLeft,  FileVideo,  Loader2, LucideFileVideo, Pencil, Maximize, X, RefreshCw, ChevronDown, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import CandidateDetailSkeleton from '@/components/candidateSkelton';
 import {
@@ -41,6 +41,8 @@ const CandidateDetailPage = () => {
   const [user, setUser] = useState(null);
   const [candidate, setCandidate] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [manatalCandidate, setManatalCandidate] = useState(null);
+  const [isManatalLoading, setIsManatalLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [managerComment, setManagerComment] = useState('');
   const [webhookResponse, setWebhookResponse] = useState(null);
@@ -55,6 +57,7 @@ const CandidateDetailPage = () => {
   const [isJobLoading, setIsJobLoading] = useState(false);
   const [allJobs, setAllJobs] = useState([]);
   const [isEditingJob, setIsEditingJob] = useState(false);
+  const [showManatalWarning, setShowManatalWarning] = useState(false);
 
 
   useEffect(() => {
@@ -149,6 +152,40 @@ const CandidateDetailPage = () => {
     }
   }, [candidateId]);
 
+  useEffect(() => {
+    const fetchManatalCandidate = async () => {
+        if (!candidate?.email) return;
+        setIsManatalLoading(true);
+        try {
+            const response = await fetch(`/api/manatal?email=${encodeURIComponent(candidate.email)}`);
+            if (response.ok) {
+                const { data } = await response.json();
+                if (data && data.results && data.results.length > 0) {
+                    setManatalCandidate(data.results[0]);
+                    console.log(manatalCandidate);
+
+                } else {
+                    setManatalCandidate(null);
+                }
+            } else {
+              setManatalCandidate(null);
+              const error = await response.json();
+              if (response.status !== 404) { // Don't show toast for "not found"
+                 toast.error(error.error || "Failed to fetch Manatal data.")
+              }
+            }
+        } catch (error) {
+            console.error("Error fetching Manatal info", error);
+            toast.error("An error occurred while fetching Manatal data.");
+        }
+        setIsManatalLoading(false);
+    };
+
+    if (candidate) {
+        fetchManatalCandidate();
+    }
+  }, [candidate]);
+
   const handleStatusChange = async (status) => {
     setIsSubmitting(status);
     try {
@@ -164,8 +201,9 @@ const CandidateDetailPage = () => {
           managerComment: managerComment,
         }),
       });
-
+      console.log("-------------------response-------------------", response);
       if (response.ok) {
+        
         const data = await response.json();                                                                                                                                                                                                                                                                                              
         setCandidate(prev => ({...prev, status: status, appProperties: {...prev.appProperties, status: status}}));
         if(data.webhookData) {
@@ -182,6 +220,23 @@ const CandidateDetailPage = () => {
   };
 
   const handleSendToSlack = async () => {
+    // Check if Manatal profile is still loading
+    if (isManatalLoading) {
+      toast.error('Please wait for Manatal profile to finish loading.');
+      return;
+    }
+
+    // If no Manatal profile exists, show warning dialog
+    if (!manatalCandidate) {
+      setShowManatalWarning(true);
+      return;
+    }
+
+    // Proceed with sending
+    await sendToSlackInternal();
+  };
+
+  const sendToSlackInternal = async () => {
     setIsSendingToSlack(true);
     if (!slackChannel) {
       toast.info('Please select a Slack channel.');
@@ -194,11 +249,11 @@ const CandidateDetailPage = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ webhookResponse, candidate ,candidateId ,slackChannel ,job }),
+        body: JSON.stringify({ webhookResponse, candidate ,candidateId ,slackChannel ,job, manatalCandidate }),
       });
 
       if (response.ok) {
-        toast.success('Successfully sent to Slack!');
+        toast.success('Notes Successfully Sent');
       } else {
         const errorData = await response.json();
         toast.error(`Failed to send to Slack: ${errorData.error}`);
@@ -209,6 +264,7 @@ const CandidateDetailPage = () => {
       console.error('Error sending to Slack:', error);
     }
     setIsSendingToSlack(false);
+    setShowManatalWarning(false);
   };
 
   const handleEdit = () => setIsEditing(true);
@@ -306,6 +362,25 @@ const CandidateDetailPage = () => {
                 </div>
             </div>
         )}
+
+        {/* Manatal Warning Dialog */}
+        <AlertDialog open={showManatalWarning} onOpenChange={setShowManatalWarning}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Manatal Profile Not Found</AlertDialogTitle>
+              <AlertDialogDescription>
+                No Manatal profile was found for this candidate. The notes will be sent to Slack without Manatal profile information. Do you want to continue?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={sendToSlackInternal}>
+                Send Anyway
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <Link href="/">
@@ -399,6 +474,35 @@ const CandidateDetailPage = () => {
                       </div>
                   )}
                 </div>
+                <Card className="w-full gap-0.5 p-2 mt-2">
+                    <CardHeader className="p-2 pb-0">
+                        <CardTitle className="text-sm font-medium flex items-center justify-between">
+                            Manatal Profile
+                            {manatalCandidate && (
+                                <a href={`https://app.manatal.com/candidates/${manatalCandidate.id}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                                    <ExternalLink className="h-3 w-3 text-muted-foreground hover:text-primary"/>
+                                </a>
+                            )}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-2 space-y-2">
+                        {isManatalLoading ? (
+                            <>
+                                <Skeleton className="h-3 w-3/4" />
+                                <Skeleton className="h-3 w-1/2" />
+                            </>
+                        ) : manatalCandidate ? (
+                            <div className="text-xs space-y-1">
+                                <p><span className="font-semibold">Name:</span> {manatalCandidate.full_name}</p>
+                                <p><span className="font-semibold">Current Position:</span> {manatalCandidate.current_position}</p>
+                                <p><span className="font-semibold">Resume:</span><a href={manatalCandidate.resume} target="_blank" rel="noopener noreferrer" className="text-blue-600 pl-1 text-md hover:underline">See Resume</a> </p>
+                                {manatalCandidate.headline && <p><span className="font-semibold">Headline:</span> {manatalCandidate.headline}</p>}
+                            </div>
+                        ) : (
+                            <p className="text-xs text-muted-foreground">Not found in Manatal.</p>
+                        )}
+                    </CardContent>
+                </Card>
                 {webhookResponse && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -602,11 +706,15 @@ const CandidateDetailPage = () => {
                             <div className="space-y-2">
                               <Button
                                   onClick={handleSendToSlack}
-                                  disabled={isSendingToSlack || !user.slackAccessToken}
+                                  disabled={isSendingToSlack || !user?.slackAccessToken || isManatalLoading}
                                   className="w-full mt-4"
                               >
-                                  {isSendingToSlack ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                  Send Notes
+                                  {isSendingToSlack ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  ) : isManatalLoading ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  ) : null}
+                                  {isManatalLoading ? 'Loading Profile...' : 'Send Notes'}
                               </Button>
                             </div>
                           </>
