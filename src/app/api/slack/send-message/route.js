@@ -37,6 +37,7 @@ export async function POST(request) {
         token: user.slackAccessToken, 
         clickUpToken:user.clickUpAccessToken,
         data, 
+        manatalToken:user.manatalAccessToken,
       }),
     });
 
