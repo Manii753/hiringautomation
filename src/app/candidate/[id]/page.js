@@ -144,7 +144,7 @@ const CandidateDetailPage = () => {
       } else {
         setManagerComment('');
       }
-
+    
       
       
       setLoading(false);
@@ -178,7 +178,7 @@ const CandidateDetailPage = () => {
         } else {
           setManatalCandidate(null);
           const error = await response.json();
-          if (response.status !== 404) { // Don't show toast for "not found"
+          if (response.status !== 404) { // Don not show toast for "not found"
              toast.error(error.error || "Failed to fetch Manatal data.")
           }
         }
