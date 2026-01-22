@@ -6,6 +6,10 @@ const CandidateSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
+  email: {
+    type: String,
+  },
+ 
   managerComment: {
     type: String,
   },

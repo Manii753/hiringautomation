@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,7 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ArrowLeft,  FileVideo,  Loader2, LucideFileVideo, Pencil, Maximize, X, RefreshCw, ChevronDown, ExternalLink } from 'lucide-react';
+import { ArrowLeft,  FileVideo,  Loader2, LucideFileVideo, Pencil, Maximize, X, RefreshCw, ChevronDown, ExternalLink, Check } from 'lucide-react';
 import Link from 'next/link';
 import CandidateDetailSkeleton from '@/components/candidateSkelton';
 import {
@@ -58,6 +59,11 @@ const CandidateDetailPage = () => {
   const [allJobs, setAllJobs] = useState([]);
   const [isEditingJob, setIsEditingJob] = useState(false);
   const [showManatalWarning, setShowManatalWarning] = useState(false);
+  
+  // Email editing states
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
+  const [editedEmail, setEditedEmail] = useState('');
+  const [isSavingEmail, setIsSavingEmail] = useState(false);
 
 
   useEffect(() => {
@@ -117,6 +123,7 @@ const CandidateDetailPage = () => {
       const response = await fetch(`/api/drive/file/${candidateId}`);
       const data = await response.json();
       setCandidate(data);
+      setEditedEmail(data.email || '');
       
       if (data.positionMatch) {
         setClickUpTaskId(data.positionMatch);
@@ -152,39 +159,86 @@ const CandidateDetailPage = () => {
     }
   }, [candidateId]);
 
-  useEffect(() => {
-    const fetchManatalCandidate = async () => {
-        if (!candidate?.email) return;
-        setIsManatalLoading(true);
-        try {
-            const response = await fetch(`/api/manatal?email=${encodeURIComponent(candidate.email)}`);
-            if (response.ok) {
-                const { data } = await response.json();
-                if (data && data.results && data.results.length > 0) {
-                    setManatalCandidate(data.results[0]);
-                    console.log(manatalCandidate);
-
-                } else {
-                    setManatalCandidate(null);
-                }
-            } else {
-              setManatalCandidate(null);
-              const error = await response.json();
-              if (response.status !== 404) { // Don't show toast for "not found"
-                 toast.error(error.error || "Failed to fetch Manatal data.")
-              }
-            }
-        } catch (error) {
-            console.error("Error fetching Manatal info", error);
-            toast.error("An error occurred while fetching Manatal data.");
-        }
-        setIsManatalLoading(false);
-    };
-
-    if (candidate) {
-        fetchManatalCandidate();
+  const fetchManatalCandidate = async (email) => {
+    if (!email) {
+      setManatalCandidate(null);
+      return;
     }
-  }, [candidate]);
+    setIsManatalLoading(true);
+    try {
+        const response = await fetch(`/api/manatal?email=${encodeURIComponent(email)}`);
+        if (response.ok) {
+            const { data } = await response.json();
+            if (data && data.results && data.results.length > 0) {
+                setManatalCandidate(data.results[0]);
+                console.log(data.results[0]);
+            } else {
+                setManatalCandidate(null);
+            }
+        } else {
+          setManatalCandidate(null);
+          const error = await response.json();
+          if (response.status !== 404) { // Don't show toast for "not found"
+             toast.error(error.error || "Failed to fetch Manatal data.")
+          }
+        }
+    } catch (error) {
+        console.error("Error fetching Manatal info", error);
+        toast.error("An error occurred while fetching Manatal data.");
+    }
+    setIsManatalLoading(false);
+  };
+
+  useEffect(() => {
+    if (candidate?.email) {
+        fetchManatalCandidate(candidate.email);
+    }
+  }, [candidate?.email]);
+
+  const handleEmailEdit = () => {
+    setIsEditingEmail(true);
+  };
+
+  const handleEmailCancel = () => {
+    setIsEditingEmail(false);
+    setEditedEmail(candidate.email || '');
+  };
+
+  const handleEmailSave = async () => {
+    if (!editedEmail) {
+      toast.error('Email cannot be empty');
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(editedEmail)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    setIsSavingEmail(true);
+    try {
+      const response = await fetch(`/api/drive/file/${candidateId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: editedEmail }),
+      });
+      
+      if (response.ok) {
+        setCandidate(prev => ({ ...prev, email: editedEmail }));
+        setIsEditingEmail(false);
+        toast.success('Email updated successfully');
+        // Fetch Manatal profile with new email
+        await fetchManatalCandidate(editedEmail);
+      } else {
+        toast.error('Failed to update email');
+      }
+    } catch (error) {
+      toast.error('An error occurred while saving email');
+    }
+    setIsSavingEmail(false);
+  };
 
   const handleStatusChange = async (status) => {
     setIsSubmitting(status);
@@ -201,7 +255,7 @@ const CandidateDetailPage = () => {
           managerComment: managerComment,
         }),
       });
-      console.log("-------------------response-------------------", response);
+      
       if (response.ok) {
         
         const data = await response.json();                                                                                                                                                                                                                                                                                              
@@ -394,7 +448,56 @@ const CandidateDetailPage = () => {
             <div className="flex justify-between">
               <div>
                 <h1 className="text-3xl font-bold tracking-tight">{candidate.candidateName}</h1>
-                <p className="text-muted-foreground mt-1">{candidate.email}</p>
+                
+                {/* Editable Email Section */}
+                <div className="mt-1 flex items-center gap-2">
+                  {isEditingEmail ? (
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="email"
+                        value={editedEmail}
+                        onChange={(e) => setEditedEmail(e.target.value)}
+                        className="h-8"
+                        placeholder="Enter email address"
+                        disabled={isSavingEmail}
+                      />
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={handleEmailSave}
+                        disabled={isSavingEmail}
+                        className="h-8 w-8"
+                      >
+                        {isSavingEmail ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Check className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={handleEmailCancel}
+                        disabled={isSavingEmail}
+                        className="h-8 w-8"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-muted-foreground">{candidate.email || 'No email'}</p>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={handleEmailEdit}
+                        className="h-6 w-6"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                    </>
+                  )}
+                </div>
                 
                 <div className='flex items-center '>
                   <LucideFileVideo className="h-4 w-4 mr-2" />
