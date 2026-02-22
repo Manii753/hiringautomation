@@ -48,7 +48,6 @@ export async function GET() {
                 or mimeType='application/vnd.google-apps.document' 
                 or mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
                 or mimeType='text/plain') 
-              and name contains 'interview'
               and name contains 'notes by gemini'`,
           pageSize: 100,
           fields: 'nextPageToken, files(id, name, mimeType, createdTime, appProperties, owners(displayName, emailAddress))',
@@ -60,6 +59,7 @@ export async function GET() {
       } while (pageToken);
       
       return folderFiles;
+      
     });
 
     const allFilesArrays = await Promise.all(allFilesPromises);

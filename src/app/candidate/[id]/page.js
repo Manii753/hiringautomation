@@ -123,6 +123,7 @@ const CandidateDetailPage = () => {
       const response = await fetch(`/api/drive/file/${candidateId}`);
       const data = await response.json();
       setCandidate(data);
+      console.log(data);
       setEditedEmail(data.email || '');
       
       if (data.positionMatch) {
@@ -265,7 +266,8 @@ const CandidateDetailPage = () => {
             setEditedWebhookResponse(data.webhookData);
         }
       } else {
-        console.error('Failed to update candidate status');
+        const errorData = await response.json();
+        console.error('Failed to update candidate status:', response.status, errorData);
       }
     } catch (error) {
       console.error('Error submitting candidate status:', error);
@@ -606,7 +608,7 @@ const CandidateDetailPage = () => {
                         )}
                     </CardContent>
                 </Card>
-                {webhookResponse && (
+                {(webhookResponse || candidate.status === 'pass' || candidate.status === 'fail') && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button variant="outline" className="w-full mt-2" disabled={isReevaluating}>

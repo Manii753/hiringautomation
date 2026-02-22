@@ -35,7 +35,10 @@ async function getFileContent(drive, fileId, mimeType) {
   } else {
     return buffer.toString("utf-8");
   }
+  console.log("buffer---------------------------------------", buffer);
 }
+
+
 function extractJobPosition(filename) {
   // Check for VinAudit or AutoScale (case-insensitive)
   if (/vinaudit|autoscale/i.test(filename)) {
@@ -167,7 +170,7 @@ export async function PATCH(request, context) {
     }
 
     try {
-        const { webhookResponse } = await request.json();
+        const body = await request.json();
 
         await dbConnect();
 
@@ -177,7 +180,24 @@ export async function PATCH(request, context) {
             return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
         }
 
-        candidate.webhookResponse = webhookResponse;
+        // Only update fields that are actually present in the request body
+        if ('webhookResponse' in body) {
+            candidate.webhookResponse = body.webhookResponse;
+        }
+        if ('managerComment' in body) {
+            candidate.managerComment = body.managerComment;
+        }
+        if ('email' in body) {
+            // Update email in Google Drive appProperties
+            const oauth2Client = new google.auth.OAuth2();
+            oauth2Client.setCredentials({ access_token: session.accessToken });
+            const drive = google.drive({ version: "v3", auth: oauth2Client });
+            await drive.files.update({
+                fileId,
+                appProperties: { email: body.email },
+            });
+        }
+
         await candidate.save();
 
         return NextResponse.json(candidate);

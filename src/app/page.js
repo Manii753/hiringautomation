@@ -65,7 +65,7 @@ const CandidateList = () => {
   }, [candidates]);
 
   function extractNameFromFileName(fileName) {
-    const match = fileName.match(/Interview\s*\(([^)]+)\)/i);
+    const match = fileName.match(/\(([^)]+)\)/);
     return match ? match[1].trim() : "Not found";
   }
 
@@ -95,7 +95,9 @@ const CandidateList = () => {
         signOut();
       }
     }
+    
   };
+  console.log("candidates",candidates);
 
   const requestSort = (key) => {
     let direction = 'ascending';
