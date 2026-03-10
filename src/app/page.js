@@ -97,7 +97,7 @@ const CandidateList = () => {
     }
     
   };
-  console.log("candidates",candidates);
+  
 
   const requestSort = (key) => {
     let direction = 'ascending';

@@ -5,7 +5,6 @@ import { NextResponse } from "next/server";
 import mammoth from "mammoth";
 import dbConnect from "@/lib/dbConnect";
 import Candidate from "@/lib/models/Candidate";
-import { file } from "googleapis/build/src/apis/file";
 
 async function getFileContent(drive, fileId, mimeType) {
   let buffer;
@@ -35,7 +34,7 @@ async function getFileContent(drive, fileId, mimeType) {
   } else {
     return buffer.toString("utf-8");
   }
-  console.log("buffer---------------------------------------", buffer);
+  
 }
 
 
@@ -77,6 +76,10 @@ function parseFileContent(content, fileName = "") {
     summary: summaryMatch ? summaryMatch[1].trim() : "No summary found.",
     content,
   };
+}
+
+function hasUsableEmail(email) {
+  return typeof email === "string" && email.trim() !== "" && email !== "Unknown";
 }
 
 export async function GET(request, context) {
@@ -130,7 +133,23 @@ export async function GET(request, context) {
 
     // 5️⃣ Fetch Candidate data from DB
     await dbConnect();
-    const candidate = await Candidate.findOne({ fileId });
+    let candidate = await Candidate.findOne({ fileId });
+    const driveEmail = hasUsableEmail(fileMetadata.data.appProperties?.email)
+      ? fileMetadata.data.appProperties.email
+      : null;
+    const parsedEmail = hasUsableEmail(parsedData.email) ? parsedData.email : null;
+    const emailToPersist = driveEmail || parsedEmail;
+
+    if (emailToPersist && !hasUsableEmail(candidate?.email)) {
+      candidate = await Candidate.findOneAndUpdate(
+        { fileId },
+        {
+          $set: { email: emailToPersist },
+          $setOnInsert: { fileId },
+        },
+        { new: true, upsert: true, setDefaultsOnInsert: true }
+      );
+    }
 
     // 6️⃣ Prepare final response
     const response = {
@@ -140,6 +159,7 @@ export async function GET(request, context) {
       webhookResponse: candidate?.webhookResponse || null,
       managerComment: candidate?.managerComment || "",
       ...parsedData,
+      email: hasUsableEmail(candidate?.email) ? candidate.email : driveEmail || parsedData.email,
       recordingId: matchingRecording ? matchingRecording.id : null,
       recordingName: matchingRecording ? matchingRecording.name : null,
       recordingLink: matchingRecording
@@ -161,8 +181,8 @@ export async function GET(request, context) {
 }
 
 export async function PATCH(request, context) {
-    const { params } = context;
-    const fileId = params.id;
+    const { id } = await context.params;
+    const fileId = id;
 
     const session = await getServerSession(authOptions);
     if (!session) {
@@ -171,34 +191,32 @@ export async function PATCH(request, context) {
 
     try {
         const body = await request.json();
+        const updates = {};
+
+        if ('webhookResponse' in body) {
+            updates.webhookResponse = body.webhookResponse;
+        }
+        if ('managerComment' in body) {
+            updates.managerComment = body.managerComment;
+        }
+        if ('email' in body) {
+            updates.email = typeof body.email === "string" ? body.email.trim() : body.email;
+        }
+
+        if (Object.keys(updates).length === 0) {
+            return NextResponse.json({ error: "No fields to update" }, { status: 400 });
+        }
 
         await dbConnect();
 
-        const candidate = await Candidate.findOne({ fileId });
-
-        if (!candidate) {
-            return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
-        }
-
-        // Only update fields that are actually present in the request body
-        if ('webhookResponse' in body) {
-            candidate.webhookResponse = body.webhookResponse;
-        }
-        if ('managerComment' in body) {
-            candidate.managerComment = body.managerComment;
-        }
-        if ('email' in body) {
-            // Update email in Google Drive appProperties
-            const oauth2Client = new google.auth.OAuth2();
-            oauth2Client.setCredentials({ access_token: session.accessToken });
-            const drive = google.drive({ version: "v3", auth: oauth2Client });
-            await drive.files.update({
-                fileId,
-                appProperties: { email: body.email },
-            });
-        }
-
-        await candidate.save();
+        const candidate = await Candidate.findOneAndUpdate(
+            { fileId },
+            {
+                $set: updates,
+                $setOnInsert: { fileId },
+            },
+            { new: true, upsert: true, setDefaultsOnInsert: true }
+        );
 
         return NextResponse.json(candidate);
     } catch (error) {
