@@ -123,7 +123,7 @@ const CandidateDetailPage = () => {
       const response = await fetch(`/api/drive/file/${candidateId}`);
       const data = await response.json();
       setCandidate(data);
-      console.log(data);
+      
       setEditedEmail(data.email || '');
       
       if (data.positionMatch) {
@@ -172,7 +172,7 @@ const CandidateDetailPage = () => {
             const { data } = await response.json();
             if (data && data.results && data.results.length > 0) {
                 setManatalCandidate(data.results[0]);
-                console.log(data.results[0]);
+                
             } else {
                 setManatalCandidate(null);
             }
