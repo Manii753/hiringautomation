@@ -392,24 +392,39 @@ const CandidateDetailPage = () => {
 
   const renderViewValue = (value) => {
     if (value === null || value === undefined || value === '') {
-      return <p className="text-muted-foreground">N/A</p>;
+      return <span className="text-muted-foreground italic text-sm">N/A</span>;
     }
     if (Array.isArray(value)) {
+      if (value.length === 0) {
+        return <span className="text-muted-foreground italic text-sm">None</span>;
+      }
+      const isPrimitiveArray = value.every(v => typeof v !== 'object' || v === null);
+      if (isPrimitiveArray) {
+        return (
+          <div className="flex flex-wrap gap-1.5">
+            {value.map((item, idx) => (
+              <Badge key={idx} variant="secondary" className="font-normal text-xs">
+                {String(item)}
+              </Badge>
+            ))}
+          </div>
+        );
+      }
       return (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {value.map((item, idx) => (
-            <div key={idx} className="pl-4 border-l-2">
+            <div key={idx} className="rounded-md bg-muted/40 p-2.5 text-sm [overflow-wrap:anywhere] min-w-0">
               {typeof item === 'object' && item !== null ? (
                 <div className="space-y-1">
                   {Object.entries(item).map(([k, v]) => (
-                    <div key={k} className="flex gap-2">
-                      <strong className="capitalize w-1/4">{k.replace(/_/g, ' ')}:</strong>
-                      <div className="w-3/4">{renderViewValue(v)}</div>
+                    <div key={k} className="grid grid-cols-1 sm:grid-cols-[130px_1fr] gap-1 sm:gap-2 sm:items-baseline">
+                      <span className="text-xs font-medium text-muted-foreground capitalize">{k.replace(/_/g, ' ')}</span>
+                      <div className="min-w-0 [overflow-wrap:anywhere]">{renderViewValue(v)}</div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground whitespace-pre-wrap">{String(item)}</p>
+                <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">{String(item)}</p>
               )}
             </div>
           ))}
@@ -418,25 +433,25 @@ const CandidateDetailPage = () => {
     }
     if (typeof value === 'object') {
       return (
-        <div className="space-y-2 pl-2">
+        <div className="space-y-1">
           {Object.entries(value).map(([k, v]) => (
-            <div key={k}>
-              <strong className="capitalize">{k.replace(/_/g, ' ')}:</strong>
-              <div className="pl-2 mt-1">{renderViewValue(v)}</div>
+            <div key={k} className="grid grid-cols-[130px_1fr] gap-2 items-baseline">
+              <span className="text-xs font-medium text-muted-foreground capitalize">{k.replace(/_/g, ' ')}</span>
+              <div>{renderViewValue(v)}</div>
             </div>
           ))}
         </div>
       );
     }
-    return <p className="text-muted-foreground whitespace-pre-wrap">{String(value)}</p>;
+    return <span className="block text-sm whitespace-pre-wrap [overflow-wrap:anywhere] leading-relaxed">{String(value)}</span>;
   };
 
   const renderEditValue = (value, path) => {
     if (Array.isArray(value)) {
       return (
-        <div className="pl-4 mt-2 border-l-2 space-y-2">
+        <div className="pl-2 sm:pl-4 mt-2 border-l-2 space-y-2 min-w-0">
           {value.map((item, idx) => (
-            <div key={idx} className="space-y-2">
+            <div key={idx} className="space-y-2 min-w-0">
               <h4 className="font-medium">Item {idx + 1}</h4>
               {typeof item === 'object' && item !== null ? (
                 Object.entries(item).map(([k, v]) => (
@@ -458,9 +473,9 @@ const CandidateDetailPage = () => {
     }
     if (typeof value === 'object' && value !== null) {
       return (
-        <div className="space-y-2 pl-4">
+        <div className="space-y-2 pl-2 sm:pl-4 min-w-0">
           {Object.entries(value).map(([k, v]) => (
-            <div key={k}>
+            <div key={k} className="min-w-0">
               <label className="text-sm font-medium capitalize">{k.replace(/_/g, ' ')}</label>
               {renderEditValue(v, [...path, k])}
             </div>
@@ -485,28 +500,28 @@ const CandidateDetailPage = () => {
   return (
     
        
-      <main className="max-w-7xl m-auto px-4 sm:px-6 lg:px-8 py-8 ">
+      <main className="max-w-7xl m-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 ">
         {isNotesOverlayVisible && (
-           
-           <div 
-                className="flex justify-center items-center fixed inset-0 z-50 bg-background/60 backdrop-blur-sm"
+
+           <div
+                className="flex justify-center items-center fixed inset-0 z-50 bg-background/60 backdrop-blur-sm p-3 sm:p-6"
                 onClick={() => setIsNotesOverlayVisible(false)}
             >
-                <div 
-                    className=" bg-muted rounded-lg shadow-xl w-3/4 h-4/5 p-6 relative"
+                <div
+                    className="bg-muted rounded-lg shadow-xl w-full max-w-5xl h-[90vh] sm:h-4/5 p-4 sm:p-6 relative"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="absolute top-4 right-4"
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-3 right-3 sm:top-4 sm:right-4"
                         onClick={() => setIsNotesOverlayVisible(false)}
                     >
                         <X className="h-6 w-6" />
                     </Button>
-                    <h2 className="text-2xl font-bold mb-4">Interview Notes & Transcript</h2>
-                    <div className="h-[calc(100%-4rem)] overflow-y-auto">
-                        <pre className="whitespace-pre-wrap text-sm font-mono leading-relaxed">
+                    <h2 className="text-lg sm:text-2xl font-bold mb-4 pr-10">Interview Notes & Transcript</h2>
+                    <div className="h-[calc(100%-3rem)] sm:h-[calc(100%-4rem)] overflow-y-auto">
+                        <pre className="whitespace-pre-wrap text-xs sm:text-sm font-mono leading-relaxed">
                             {candidate.content}
                         </pre>
                     </div>
@@ -542,19 +557,19 @@ const CandidateDetailPage = () => {
                 </Link>
             </div>
 
-            <div className="flex justify-between">
-              <div>
-                <h1 className="text-3xl font-bold tracking-tight">{candidate.candidateName}</h1>
+            <div className="flex flex-col lg:flex-row lg:justify-between gap-4 lg:gap-6">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight break-words">{candidate.candidateName}</h1>
                 
                 {/* Editable Email Section */}
-                <div className="mt-1 flex items-center gap-2">
+                <div className="mt-1 flex items-center gap-2 flex-wrap">
                   {isEditingEmail ? (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
                       <Input
                         type="email"
                         value={editedEmail}
                         onChange={(e) => setEditedEmail(e.target.value)}
-                        className="h-8"
+                        className="h-8 flex-1 sm:flex-none"
                         placeholder="Enter email address"
                         disabled={isSavingEmail}
                       />
@@ -583,12 +598,12 @@ const CandidateDetailPage = () => {
                     </div>
                   ) : (
                     <>
-                      <p className="text-muted-foreground">{candidate.email || 'No email'}</p>
+                      <p className="text-muted-foreground text-sm sm:text-base break-all">{candidate.email || 'No email'}</p>
                       <Button
                         size="icon"
                         variant="ghost"
                         onClick={handleEmailEdit}
-                        className="h-6 w-6"
+                        className="h-6 w-6 shrink-0"
                       >
                         <Pencil className="h-3 w-3" />
                       </Button>
@@ -617,8 +632,8 @@ const CandidateDetailPage = () => {
               </div>
 
               
-              <div className='flex flex-col items-end space-y-1' >
-                <div className='flex items-center'>
+              <div className='flex flex-col items-stretch lg:items-end space-y-1 w-full lg:w-auto lg:max-w-sm shrink-0' >
+                <div className='flex items-center justify-start lg:justify-end'>
                   <span className='text-muted-foreground text-xs text-center mr-2'>Slack Channel</span>
                   <Badge variant={"outline"} className={"h-8 w-fit flex"}> {session?.slackChannel} </Badge>
                 </div>
@@ -732,8 +747,8 @@ const CandidateDetailPage = () => {
             </div>
             
 
-            <div className="grid grid-cols-1 gap-6">
-                <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-6 min-w-0">
+                <div className="space-y-6 min-w-0">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle>Interview Notes & Transcript</CardTitle>
@@ -742,16 +757,16 @@ const CandidateDetailPage = () => {
                             </Button>
                         </CardHeader>
                         <CardContent>
-                            <div className="bg-muted rounded-lg p-4 h-96 overflow-y-auto">
-                            <pre className="whitespace-pre-wrap text-sm font-mono leading-relaxed">
+                            <div className="bg-muted rounded-lg p-4 h-96 overflow-auto">
+                            <pre className="whitespace-pre-wrap break-words text-sm font-mono leading-relaxed">
                                 {candidate.content}
                             </pre>
                             </div>
                         </CardContent>
                     </Card>
-                    
+
                 </div>
-                <div className="space-y-6 flex">
+                <div className="space-y-6 flex min-w-0">
                     <Card className={'w-full min-h-150px'}>
                         <CardHeader>
                             <CardTitle>Manager Review</CardTitle>
@@ -764,7 +779,7 @@ const CandidateDetailPage = () => {
                                 className="h-[150px] w-full"
                                 readOnly={!!webhookResponse}
                             />
-                            <div className="space-x-2 space-y-2 flex flex-row " style={{display: webhookResponse ? 'none' : 'flex'}}>
+                            <div className="gap-2 flex flex-col sm:flex-row" style={{display: webhookResponse ? 'none' : 'flex'}}>
                                 <Button 
                                     onClick={() => handleStatusChange('pass')} 
                                     disabled={isSubmitting || candidate.appProperties?.status === 'pass'}
@@ -786,18 +801,18 @@ const CandidateDetailPage = () => {
                         </CardContent>
                     </Card>
                 </div>
-                <div>
+                <div className="min-w-0">
                   {webhookResponse && (
-                    <Card>
-                      <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle>AI Evaluation Summary</CardTitle>
+                    <Card className="overflow-hidden">
+                      <CardHeader className="flex flex-row items-center justify-between gap-2">
+                        <CardTitle className="text-base sm:text-lg">AI Evaluation Summary</CardTitle>
                         {!isEditing && (
-                          <Button variant="outline" size="icon" onClick={handleEdit}>
+                          <Button variant="outline" size="icon" onClick={handleEdit} className="shrink-0">
                             <Pencil className="h-4 w-4" />
                           </Button>
                         )}
                       </CardHeader>
-                      <CardContent className="space-y-4">
+                      <CardContent className="space-y-4 min-w-0">
                         {isEditing ? (
                           <>
                             {Object.entries(editedWebhookResponse).map(([key, value]) => (
@@ -816,12 +831,16 @@ const CandidateDetailPage = () => {
                           </>
                         ) : (
                           <>
-                            {Object.entries(webhookResponse).map(([key, value]) => (
-                              <div key={key}>
-                                <h3 className="font-semibold text-foreground capitalize">{key.replace(/_/g, ' ')}</h3>
-                                {renderViewValue(value)}
-                              </div>
-                            ))}
+                            <div className="divide-y divide-border/60">
+                              {Object.entries(webhookResponse).map(([key, value]) => (
+                                <div key={key} className="py-3 first:pt-0 last:pb-0">
+                                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                                    {key.replace(/_/g, ' ')}
+                                  </h3>
+                                  <div>{renderViewValue(value)}</div>
+                                </div>
+                              ))}
+                            </div>
                             <div className="space-y-2">
                               <Button
                                   onClick={handleSendToSlack}

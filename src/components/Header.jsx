@@ -284,33 +284,33 @@ const Header = () => {
 
   return (
     <header className="bg-background border-b">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+      <div className="container mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             <Link href="/">
-              <h1 className="text-xl cursor-pointer font-semibold">
+              <h1 className="text-lg sm:text-xl cursor-pointer font-semibold">
                 AURA
               </h1>
             </Link>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="hidden sm:block text-xs text-muted-foreground mt-1 truncate">
               AutoScale Unified Recruiting Assistant
             </p>
           </div>
 
           {status === 'authenticated' && session?.user && (
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <ThemeToggle />
               <DropdownMenu>
-                
-                  <div className="flex items-center space-x-4 ">
-                    <Badge variant="outline" className="text-sm font-medium">{session.user.name}</Badge>
+
+                  <div className="flex items-center gap-2 sm:gap-4 ">
+                    <Badge variant="outline" className="hidden sm:inline-flex text-sm font-medium max-w-[160px] truncate">{session.user.name}</Badge>
                     <img
                       src={session.user.image}
                       alt="Profile"
                       className="w-8 h-8 rounded-full"
                     />
                     <DropdownMenuTrigger asChild>
-                      <Menu className="w-5 h-5"></Menu>
+                      <Menu className="w-5 h-5 cursor-pointer"></Menu>
                     </DropdownMenuTrigger>
                   </div>
                 

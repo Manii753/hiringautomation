@@ -155,18 +155,18 @@ const CandidateList = () => {
   }
 
   return (
-    <div className=" space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-3 sm:space-y-6">
+      <div className="flex flex-col gap-2 sm:gap-3 md:flex-row md:items-center md:justify-between">
         <Input
           placeholder="Search by name..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
+          className="w-full md:max-w-sm"
         />
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2 flex-wrap md:flex-nowrap">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">Filter by Status</Button>
+              <Button variant="outline" size="sm" className="text-xs sm:text-sm flex-1 sm:flex-none">Filter by Status</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuLabel>Status</DropdownMenuLabel>
@@ -179,7 +179,7 @@ const CandidateList = () => {
           </DropdownMenu>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">Filter by Owner</Button>
+              <Button variant="outline" size="sm" className="text-xs sm:text-sm flex-1 sm:flex-none">Filter by Owner</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuLabel>Owner</DropdownMenuLabel>
@@ -194,7 +194,7 @@ const CandidateList = () => {
           </DropdownMenu>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">Filter by Position</Button>
+              <Button variant="outline" size="sm" className="text-xs sm:text-sm flex-1 sm:flex-none">Filter by Position</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuLabel>Position</DropdownMenuLabel>
@@ -210,17 +210,18 @@ const CandidateList = () => {
           <DatePickerDemo date={date} setDate={setDate} />
           <Button
             variant="outline"
+            size="sm"
             onClick={() => fetchCandidates(true)}
             disabled={loading}
-            className="flex items-center"
+            className="flex items-center text-xs sm:text-sm flex-1 sm:flex-none"
           >
             {loading ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" /> Refreshing...
+                <Loader2 className="h-5 w-5 animate-spin mr-2" /> Refreshing...
               </>
             ) : (
               <>
-                <RefreshCw  /> 
+                <RefreshCw className="h-5 w-5" />
               </>
             )}
           </Button>
@@ -228,10 +229,54 @@ const CandidateList = () => {
         </div>
       </div>
 
-      <Card >
+      {/* Mobile card list */}
+      <div className="md:hidden">
+        <ScrollArea className="h-[calc(100vh-260px)] w-full">
+          <div className="space-y-2">
+            {sortedCandidates.map((candidate) => {
+              const status = candidate.appProperties?.status || "pending";
+              return (
+                <Card
+                  key={candidate.id}
+                  onClick={() => router.push(`/candidate/${candidate.id}`)}
+                  className="cursor-pointer hover:bg-muted transition-colors"
+                >
+                  <CardContent className="p-3 flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <p className="font-medium text-foreground text-sm truncate">
+                        {extractNameFromFileName(candidate.name)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(candidate.createdTime).toLocaleDateString()}
+                      </p>
+                      <p className="text-xs text-foreground truncate">
+                        <span className="text-muted-foreground">Position: </span>
+                        {extractJobPosition(candidate.name)}
+                      </p>
+                      <p className="text-xs text-foreground truncate">
+                        <span className="text-muted-foreground">Owner: </span>
+                        {candidate.owners?.[0]?.displayName || '—'}
+                      </p>
+                    </div>
+                    <Badge
+                      variant={status === "pass" ? "green" : status === "fail" ? "destructive" : "secondary"}
+                      className="text-center cursor-none font-medium px-2 py-0.5 text-[10px] shrink-0"
+                    >
+                      {status.charAt(0).toUpperCase() + status.slice(1)}
+                    </Badge>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </ScrollArea>
+      </div>
+
+      {/* Desktop / tablet table */}
+      <Card className="hidden md:block">
         <CardContent className="p-0">
-          <ScrollArea className="h-[calc(100vh-243px)] w-full overflow-x-auto ">
-            <table className=" w-full">
+          <ScrollArea className="h-[calc(100vh-243px)] w-full overflow-x-auto">
+            <table className="w-full">
               <thead className="bg-muted border-b sticky top-0">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Name</th>
@@ -241,65 +286,48 @@ const CandidateList = () => {
                       {sortConfig.key === 'createdTime' && (sortConfig.direction === 'ascending' ? <ArrowUp className="h-4 w-4 ml-1" /> : <ArrowDown className="h-4 w-4 ml-1" />)}
                     </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Owner
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Owner</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Position</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
-                <tbody className="bg-background divide-y divide-border">
-                  {sortedCandidates.map((candidate) => {
-                    const status = candidate.appProperties?.status || "pending";
+              <tbody className="bg-background divide-y divide-border">
+                {sortedCandidates.map((candidate) => {
+                  const status = candidate.appProperties?.status || "pending";
 
-                    return (
-                      <tr
-                        key={candidate.id}
-                        className="hover:bg-muted transition-colors"
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap font-medium text-foreground">
-                          {extractNameFromFileName(candidate.name)}
-                        </td>
-
-                        <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">
-                          {new Date(candidate.createdTime).toLocaleDateString()}
-                        </td>
-
-                        <td className="px-6 py-4 whitespace-nowrap text-muted-foreground cursor-pointer">
-                          <Tooltip>
-                            <TooltipTrigger>{candidate.owners?.[0]?.displayName}</TooltipTrigger>
-                            <TooltipContent>
-                              <p>{candidate.owners?.[0]?.emailAddress}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap font-medium text-foreground">{extractJobPosition(candidate.name)}</td>
-
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge
-                            variant={status === "pass" ? "green" : status === "fail" ? "destructive" : "secondary"}
-                            className={`text-center cursor-none font-medium px-3 py-1`}>
-                            {status.charAt(0).toUpperCase() + status.slice(1)}
-                          </Badge>
-                        </td>
-                        
-
-                        <td className="px-6 py-4 whitespace-nowrap text-right ">
-                          <Button
-                            variant="ghost"
-                            className={"cursor-pointer underline"}
-                            size="sm"
-                            onClick={() => router.push(`/candidate/${candidate.id}`)}
-                          >
-                            View Details
-                          </Button>
-                        </td>
-                      </tr>
-                    );
-
-                  })}
-                </tbody>
+                  return (
+                    <tr
+                      key={candidate.id}
+                      onClick={() => router.push(`/candidate/${candidate.id}`)}
+                      className="hover:bg-muted transition-colors cursor-pointer"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap font-medium text-foreground text-sm">
+                        {extractNameFromFileName(candidate.name)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-muted-foreground text-sm">
+                        {new Date(candidate.createdTime).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-muted-foreground text-sm">
+                        <Tooltip>
+                          <TooltipTrigger onClick={(e) => e.stopPropagation()}>{candidate.owners?.[0]?.displayName}</TooltipTrigger>
+                          <TooltipContent>
+                            <p>{candidate.owners?.[0]?.emailAddress}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap font-medium text-foreground text-sm">{extractJobPosition(candidate.name)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Badge
+                          variant={status === "pass" ? "green" : status === "fail" ? "destructive" : "secondary"}
+                          className="text-center cursor-none font-medium px-3 py-1"
+                        >
+                          {status.charAt(0).toUpperCase() + status.slice(1)}
+                        </Badge>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
             </table>
           </ScrollArea>
         </CardContent>
@@ -332,7 +360,7 @@ export default function App() {
 
   return (
     <div className="flex bg-muted">
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="container mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 w-full">
         <CandidateList />
       </main>
     </div>
