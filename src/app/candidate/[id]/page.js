@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,8 +18,28 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { ArrowLeft,  FileVideo,  Loader2, LucideFileVideo, Pencil, Maximize, X, RefreshCw, ChevronDown, ExternalLink, Check, Trash2, Send } from 'lucide-react';
+} from "@/components/ui/dropdown-menu";
+import {
+  ArrowLeft,
+  LucideFileVideo,
+  Loader2,
+  Pencil,
+  Maximize,
+  X,
+  RefreshCw,
+  ChevronDown,
+  ExternalLink,
+  Check,
+  Trash2,
+  Send,
+  Sparkles,
+  FileText,
+  MessageSquare,
+  User as UserIcon,
+  Calendar,
+  Briefcase,
+  Slack,
+} from 'lucide-react';
 import Link from 'next/link';
 import CandidateDetailSkeleton from '@/components/candidateSkelton';
 import {
@@ -31,9 +52,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-
-
+} from "@/components/ui/alert-dialog";
 
 const CandidateDetailPage = () => {
   const params = useParams();
@@ -59,7 +78,7 @@ const CandidateDetailPage = () => {
   const [allJobs, setAllJobs] = useState([]);
   const [isEditingJob, setIsEditingJob] = useState(false);
   const [showManatalWarning, setShowManatalWarning] = useState(false);
-  
+
   // Email editing states
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [editedEmail, setEditedEmail] = useState('');
@@ -74,8 +93,10 @@ const CandidateDetailPage = () => {
   const [isSavingComment, setIsSavingComment] = useState(false);
   const [deletingCommentId, setDeletingCommentId] = useState(null);
 
-  const currentUserId = session?.user?.id || session?.user?._id || session?.user?.email || null;
+  // Tab state
+  const [activeTab, setActiveTab] = useState('ai');
 
+  const currentUserId = session?.user?.id || session?.user?._id || session?.user?.email || null;
 
   useEffect(() => {
     const fetchAllJobs = async () => {
@@ -94,19 +115,13 @@ const CandidateDetailPage = () => {
     fetchAllJobs();
   }, []);
 
-
   useEffect(() => {
-    
-      if (session) {
-        
-        
-        setUser(session.user);
-        if (session.slackChannel) {
-          setSlackChannel(session.slackChannel);
-        }
+    if (session) {
+      setUser(session.user);
+      if (session.slackChannel) {
+        setSlackChannel(session.slackChannel);
       }
-    
-    
+    }
   }, [session]);
 
   const setClickUpTaskId = async (jobName) => {
@@ -126,7 +141,7 @@ const CandidateDetailPage = () => {
       setJob(null);
     }
     setIsJobLoading(false);
-  }
+  };
 
   const fetchCandidateDetail = async () => {
     try {
@@ -134,16 +149,13 @@ const CandidateDetailPage = () => {
       const response = await fetch(`/api/drive/file/${candidateId}`);
       const data = await response.json();
       setCandidate(data);
-      
+
       setEditedEmail(data.email || '');
-      
+
       if (data.positionMatch) {
         setClickUpTaskId(data.positionMatch);
       }
 
-
-      
-      
       if (data.webhookResponse) {
         setWebhookResponse(data.webhookResponse);
         setEditedWebhookResponse(data.webhookResponse);
@@ -262,32 +274,31 @@ const CandidateDetailPage = () => {
     }
     setIsManatalLoading(true);
     try {
-        const response = await fetch(`/api/manatal?email=${encodeURIComponent(email)}`);
-        if (response.ok) {
-            const { data } = await response.json();
-            if (data && data.results && data.results.length > 0) {
-                setManatalCandidate(data.results[0]);
-                
-            } else {
-                setManatalCandidate(null);
-            }
+      const response = await fetch(`/api/manatal?email=${encodeURIComponent(email)}`);
+      if (response.ok) {
+        const { data } = await response.json();
+        if (data && data.results && data.results.length > 0) {
+          setManatalCandidate(data.results[0]);
         } else {
           setManatalCandidate(null);
-          const error = await response.json();
-          if (response.status !== 404) { // Don not show toast for "not found"
-             toast.error(error.error || "Failed to fetch Manatal data.")
-          }
         }
+      } else {
+        setManatalCandidate(null);
+        const error = await response.json();
+        if (response.status !== 404) {
+          toast.error(error.error || "Failed to fetch Manatal data.");
+        }
+      }
     } catch (error) {
-        console.error("Error fetching Manatal info", error);
-        toast.error("An error occurred while fetching Manatal data.");
+      console.error("Error fetching Manatal info", error);
+      toast.error("An error occurred while fetching Manatal data.");
     }
     setIsManatalLoading(false);
   };
 
   useEffect(() => {
     if (candidate?.email) {
-        fetchManatalCandidate(candidate.email);
+      fetchManatalCandidate(candidate.email);
     }
   }, [candidate?.email]);
 
@@ -306,7 +317,6 @@ const CandidateDetailPage = () => {
       return;
     }
 
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(editedEmail)) {
       toast.error('Please enter a valid email address');
@@ -320,12 +330,11 @@ const CandidateDetailPage = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: editedEmail }),
       });
-      
+
       if (response.ok) {
         setCandidate(prev => ({ ...prev, email: editedEmail }));
         setIsEditingEmail(false);
         toast.success('Email updated successfully');
-        // Fetch Manatal profile with new email
         await fetchManatalCandidate(editedEmail);
       } else {
         toast.error('Failed to update email');
@@ -351,14 +360,13 @@ const CandidateDetailPage = () => {
           managerComment: managerComment,
         }),
       });
-      
+
       if (response.ok) {
-        
-        const data = await response.json();                                                                                                                                                                                                                                                                                              
-        setCandidate(prev => ({...prev, status: status, appProperties: {...prev.appProperties, status: status}}));
-        if(data.webhookData) {
-            setWebhookResponse(data.webhookData);
-            setEditedWebhookResponse(data.webhookData);
+        const data = await response.json();
+        setCandidate(prev => ({ ...prev, status: status, appProperties: { ...prev.appProperties, status: status } }));
+        if (data.webhookData) {
+          setWebhookResponse(data.webhookData);
+          setEditedWebhookResponse(data.webhookData);
         }
       } else {
         const errorData = await response.json();
@@ -371,19 +379,16 @@ const CandidateDetailPage = () => {
   };
 
   const handleSendToSlack = async () => {
-    // Check if Manatal profile is still loading
     if (isManatalLoading) {
       toast.error('Please wait for Manatal profile to finish loading.');
       return;
     }
 
-    // If no Manatal profile exists, show warning dialog
     if (!manatalCandidate) {
       setShowManatalWarning(true);
       return;
     }
 
-    // Proceed with sending
     await sendToSlackInternal();
   };
 
@@ -400,7 +405,7 @@ const CandidateDetailPage = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ webhookResponse, candidate ,candidateId ,slackChannel ,job, manatalCandidate }),
+        body: JSON.stringify({ webhookResponse, candidate, candidateId, slackChannel, job, manatalCandidate }),
       });
 
       if (response.ok) {
@@ -454,15 +459,14 @@ const CandidateDetailPage = () => {
 
       if (response.ok) {
         toast.success('Candidate has been set for re-evaluation.');
-        // Optimistically update UI
         setWebhookResponse(null);
         setManagerComment('');
         setCandidate(prev => ({
-            ...prev,
-            appProperties: {
-                ...prev.appProperties,
-                status: 'pending'
-            }
+          ...prev,
+          appProperties: {
+            ...prev.appProperties,
+            status: 'pending'
+          }
         }));
       } else {
         toast.error('Failed to set for re-evaluation.');
@@ -496,30 +500,31 @@ const CandidateDetailPage = () => {
       const isPrimitiveArray = value.every(v => typeof v !== 'object' || v === null);
       if (isPrimitiveArray) {
         return (
-          <div className="flex flex-wrap gap-1.5">
+          <ul className="space-y-1.5">
             {value.map((item, idx) => (
-              <Badge key={idx} variant="secondary" className="font-normal text-xs">
-                {String(item)}
-              </Badge>
+              <li key={idx} className="flex gap-2 text-sm leading-relaxed wrap-anywhere">
+                <span className="mt-1.5 h-1 w-1 rounded-full bg-muted-foreground/50 shrink-0" />
+                <span>{String(item)}</span>
+              </li>
             ))}
-          </div>
+          </ul>
         );
       }
       return (
         <div className="space-y-1.5">
           {value.map((item, idx) => (
-            <div key={idx} className="rounded-md bg-muted/40 p-2.5 text-sm [overflow-wrap:anywhere] min-w-0">
+            <div key={idx} className="rounded-md bg-muted/40 p-2.5 text-sm wrap-anywhere min-w-0">
               {typeof item === 'object' && item !== null ? (
                 <div className="space-y-1">
                   {Object.entries(item).map(([k, v]) => (
                     <div key={k} className="grid grid-cols-1 sm:grid-cols-[130px_1fr] gap-1 sm:gap-2 sm:items-baseline">
                       <span className="text-xs font-medium text-muted-foreground capitalize">{k.replace(/_/g, ' ')}</span>
-                      <div className="min-w-0 [overflow-wrap:anywhere]">{renderViewValue(v)}</div>
+                      <div className="min-w-0 wrap-anywhere">{renderViewValue(v)}</div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">{String(item)}</p>
+                <p className="whitespace-pre-wrap wrap-anywhere">{String(item)}</p>
               )}
             </div>
           ))}
@@ -528,17 +533,17 @@ const CandidateDetailPage = () => {
     }
     if (typeof value === 'object') {
       return (
-        <div className="space-y-1">
+        <div className="space-y-1.5">
           {Object.entries(value).map(([k, v]) => (
-            <div key={k} className="grid grid-cols-[130px_1fr] gap-2 items-baseline">
-              <span className="text-xs font-medium text-muted-foreground capitalize">{k.replace(/_/g, ' ')}</span>
-              <div>{renderViewValue(v)}</div>
+            <div key={k} className="grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-1 sm:gap-3 sm:items-baseline">
+              <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">{k.replace(/_/g, ' ')}</span>
+              <div className="text-sm leading-relaxed wrap-anywhere">{renderViewValue(v)}</div>
             </div>
           ))}
         </div>
       );
     }
-    return <span className="block text-sm whitespace-pre-wrap [overflow-wrap:anywhere] leading-relaxed">{String(value)}</span>;
+    return <span className="block text-sm whitespace-pre-wrap wrap-anywhere leading-relaxed">{String(value)}</span>;
   };
 
   const renderEditValue = (value, path) => {
@@ -587,525 +592,746 @@ const CandidateDetailPage = () => {
     );
   };
 
-
   if (loading || !candidate) {
-      return <CandidateDetailSkeleton />
-  };
+    return <CandidateDetailSkeleton />;
+  }
+
+  const initials = (candidate.candidateName || '?')
+    .split(' ')
+    .map(w => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+
+  const status = candidate.appProperties?.status || 'pending';
+  const statusVariant = status === 'pass' ? 'green' : status === 'fail' ? 'destructive' : 'default';
+  const decisionLocked = status === 'pass' || status === 'fail';
+
+  // Pull out featured fields if present
+  const featuredRecommendation = webhookResponse?.overall_recommendation || webhookResponse?.recommendation;
+  const featuredScore = webhookResponse?.fit_score || webhookResponse?.score;
+  const otherWebhookEntries = webhookResponse
+    ? Object.entries(webhookResponse).filter(([k]) => !['overall_recommendation', 'recommendation', 'fit_score', 'score'].includes(k))
+    : [];
+
+  const tabs = [
+    { key: 'ai', label: 'AI Summary', icon: Sparkles, badge: null },
+    { key: 'transcript', label: 'Transcript', icon: FileText, badge: null },
+    { key: 'comments', label: 'Comments', icon: MessageSquare, badge: comments.length || null },
+    { key: 'review', label: 'Manager Review', icon: UserIcon, badge: decisionLocked ? <Check className="h-3 w-3" /> : null },
+  ];
 
   return (
-    
-       
-      <main className="max-w-7xl m-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 ">
-        {isNotesOverlayVisible && (
-
-           <div
-                className="flex justify-center items-center fixed inset-0 z-50 bg-background/60 backdrop-blur-sm p-3 sm:p-6"
-                onClick={() => setIsNotesOverlayVisible(false)}
+    <div className="h-full flex flex-col bg-background">
+      {/* Top bar */}
+      <header className="sticky top-0 z-30 h-14 flex items-center gap-2 sm:gap-3 px-3 sm:px-5 border-b bg-background/80 backdrop-blur-md">
+        <Link href="/">
+          <Button variant="ghost" size="sm" className="h-8">
+            <ArrowLeft className="h-4 w-4 sm:mr-1" />
+            <span className="hidden sm:inline">Candidates</span>
+          </Button>
+        </Link>
+        <span className="text-muted-foreground/40 hidden sm:inline">/</span>
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="h-7 w-7 rounded-full bg-linear-to-br from-primary to-primary/60 text-primary-foreground text-xs font-semibold flex items-center justify-center shrink-0">
+            {initials}
+          </div>
+          <span className="text-sm font-semibold truncate hidden md:inline">{candidate.candidateName}</span>
+          <Badge variant={statusVariant} className="capitalize shrink-0">{status}</Badge>
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-1.5 text-xs text-muted-foreground mr-1">
+            <Slack className="h-3.5 w-3.5" />
+            <span className="font-mono">{session?.slackChannel || '—'}</span>
+          </div>
+          {(webhookResponse || status === 'pass' || status === 'fail') && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" disabled={isReevaluating} className="h-8">
+                  {isReevaluating ? <Loader2 className="h-3.5 w-3.5 sm:mr-1.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5 sm:mr-1.5" />}
+                  <span className="hidden sm:inline">Re-evaluate</span>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will reset the evaluation status to 'pending' and delete the current AI summary and manager comment. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleReevaluate}>Confirm</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+          {webhookResponse && (
+            <Button
+              onClick={handleSendToSlack}
+              disabled={isSendingToSlack || !user?.slackAccessToken || isManatalLoading}
+              size="sm"
+              className="h-8"
             >
-                <div
-                    className="bg-muted rounded-lg shadow-xl w-full max-w-5xl h-[90vh] sm:h-4/5 p-4 sm:p-6 relative"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute top-3 right-3 sm:top-4 sm:right-4"
-                        onClick={() => setIsNotesOverlayVisible(false)}
-                    >
-                        <X className="h-6 w-6" />
-                    </Button>
-                    <h2 className="text-lg sm:text-2xl font-bold mb-4 pr-10">Interview Notes & Transcript</h2>
-                    <div className="h-[calc(100%-3rem)] sm:h-[calc(100%-4rem)] overflow-y-auto">
-                        <pre className="whitespace-pre-wrap text-xs sm:text-sm font-mono leading-relaxed">
-                            {candidate.content}
-                        </pre>
-                    </div>
-                </div>
+              {isSendingToSlack || isManatalLoading ? (
+                <Loader2 className="h-3.5 w-3.5 sm:mr-1.5 animate-spin" />
+              ) : (
+                <Send className="h-3.5 w-3.5 sm:mr-1.5" />
+              )}
+              <span className="hidden sm:inline">{isManatalLoading ? 'Loading…' : 'Send Notes'}</span>
+            </Button>
+          )}
+        </div>
+      </header>
+
+      {/* Manatal Warning Dialog */}
+      <AlertDialog open={showManatalWarning} onOpenChange={setShowManatalWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Manatal Profile Not Found</AlertDialogTitle>
+            <AlertDialogDescription>
+              No Manatal profile was found for this candidate. The notes will be sent to Slack without Manatal profile information. Do you want to continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={sendToSlackInternal}>
+              Send Anyway
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Notes Overlay */}
+      {isNotesOverlayVisible && (
+        <div
+          className="flex justify-center items-center fixed inset-0 z-50 bg-background/60 backdrop-blur-sm p-3 sm:p-6"
+          onClick={() => setIsNotesOverlayVisible(false)}
+        >
+          <div
+            className="bg-muted rounded-lg shadow-xl w-full max-w-5xl h-[90vh] sm:h-4/5 p-4 sm:p-6 relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-3 right-3 sm:top-4 sm:right-4"
+              onClick={() => setIsNotesOverlayVisible(false)}
+            >
+              <X className="h-6 w-6" />
+            </Button>
+            <h2 className="text-lg sm:text-2xl font-bold mb-4 pr-10">Interview Notes & Transcript</h2>
+            <div className="h-[calc(100%-3rem)] sm:h-[calc(100%-4rem)] overflow-y-auto">
+              <pre className="whitespace-pre-wrap text-xs sm:text-sm font-mono leading-relaxed">
+                {candidate.content}
+              </pre>
             </div>
-        )}
+          </div>
+        </div>
+      )}
 
-        {/* Manatal Warning Dialog */}
-        <AlertDialog open={showManatalWarning} onOpenChange={setShowManatalWarning}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Manatal Profile Not Found</AlertDialogTitle>
-              <AlertDialogDescription>
-                No Manatal profile was found for this candidate. The notes will be sent to Slack without Manatal profile information. Do you want to continue?
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={sendToSlackInternal}>
-                Send Anyway
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <Link href="/">
-                    <Button variant="ghost" size="sm">
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back to List
-                    </Button>
-                </Link>
-            </div>
-
-            <div className="flex flex-col lg:flex-row lg:justify-between gap-4 lg:gap-6">
-              <div className="min-w-0 flex-1">
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight break-words">{candidate.candidateName}</h1>
-                
-                {/* Editable Email Section */}
-                <div className="mt-1 flex items-center gap-2 flex-wrap">
-                  {isEditingEmail ? (
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
-                      <Input
-                        type="email"
-                        value={editedEmail}
-                        onChange={(e) => setEditedEmail(e.target.value)}
-                        className="h-8 flex-1 sm:flex-none"
-                        placeholder="Enter email address"
-                        disabled={isSavingEmail}
-                      />
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={handleEmailSave}
-                        disabled={isSavingEmail}
-                        className="h-8 w-8"
-                      >
-                        {isSavingEmail ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Check className="h-4 w-4" />
-                        )}
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={handleEmailCancel}
-                        disabled={isSavingEmail}
-                        className="h-8 w-8"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <>
-                      <p className="text-muted-foreground text-sm sm:text-base break-all">{candidate.email || 'No email'}</p>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={handleEmailEdit}
-                        className="h-6 w-6 shrink-0"
-                      >
-                        <Pencil className="h-3 w-3" />
-                      </Button>
-                    </>
-                  )}
-                </div>
-                
-                <div className='flex items-center '>
-                  <LucideFileVideo className="h-4 w-4 mr-2" />
-                  <a className='underline text-primary' target="_blank" href={candidate.recordingLink}>
-                     Interview Recording
-                  </a>
-                </div>
-                 
-                <div className='flex gap-2'> 
-                  <Badge variant={"outline"} className={"mt-2 h-8 w-fit flex items-center justify-center"}>
-                    Interviewed on {candidate.interviewDate ? new Date(candidate.interviewDate).toLocaleDateString() : 'N/A'}
-                  </Badge>
-                  <Badge variant={"outline"} className={"mt-2 h-8 w-fit flex items-center justify-center"}> {candidate.interviewTime} </Badge>
-                </div> 
-                <div className='mt-2 mb-2'>
-                  <span className='text-foreground text-md text-center'>Job Position :<Badge variant={"outline"} className={" h-8 w-fit ml-1 items-center justify-center"}  > {candidate.positionMatch} </Badge></span>
-                </div>
-                <Badge variant={candidate.appProperties?.status === 'pass' ? "green" : candidate.appProperties?.status === 'fail' ? "destructive" : "default"} className="mt-2 h-8 w-fit flex items-center justify-center">{candidate.appProperties?.status || 'pending'}</Badge>
-                
+      <div className="flex-1 flex flex-col lg:flex-row min-h-0">
+        {/* Left rail */}
+        <aside className="w-full lg:w-80 lg:shrink-0 border-b lg:border-b-0 lg:border-r bg-muted/30">
+          <div className="p-5 space-y-4">
+            {/* Identity */}
+            <div className="flex flex-col items-center text-center pb-4 border-b">
+              <div className="h-16 w-16 rounded-full bg-linear-to-br from-primary to-primary/60 text-primary-foreground text-xl font-semibold flex items-center justify-center mb-3">
+                {initials}
               </div>
-
-              
-              <div className='flex flex-col items-stretch lg:items-end space-y-1 w-full lg:w-auto lg:max-w-sm shrink-0' >
-                <div className='flex items-center justify-start lg:justify-end'>
-                  <span className='text-muted-foreground text-xs text-center mr-2'>Slack Channel</span>
-                  <Badge variant={"outline"} className={"h-8 w-fit flex"}> {session?.slackChannel} </Badge>
-                </div>
-
-                <div className='w-full'>
-                  {isJobLoading ? (
-                    <Card className="w-full gap-0.5 p-2">
-                      <CardHeader className="flex flex-row items-center justify-between">
-                        <Skeleton className="h-6 w-28" /> 
-                        <Skeleton className="h-3 w-3 rounded-full" /> 
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <Skeleton className="h-4 w-40" /> 
-                        <Skeleton className="h-4 w-48" /> 
-                      </CardContent>
-                    </Card>
-
-                  ) : job && !isEditingJob ? (
-                      <Card className="w-full gap-0.5 p-2">
-                          <CardHeader className="flex flex-row items-center justify-between ">
-                              <CardTitle>Job Details</CardTitle>
-                              <Button variant="ghost" size="icon" onClick={() => setIsEditingJob(true)}>
-                                  <Pencil className="h-3 w-3" />
-                              </Button>
-                          </CardHeader>
-                          <CardContent>
-                              <p className="text-sm text-muted-foreground"><strong>Position:</strong> {job.name}</p>
-                              <p className="text-sm text-muted-foreground"><strong>ClickUp Task ID:</strong> {job.clickupTaskId}</p>
-                          </CardContent>
-                      </Card>
-                  ) : (
-                      <div className="w-full space-y-2">
-                          <p className="text-sm text-muted-foreground">
-                              {candidate.positionMatch ? `Job not found for the candidate. Select one below.` : 'Select a job.'}
-                          </p>
-                          <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                  <Button variant="outline" className="w-full justify-between">
-                                      <span>{job ? job.name : "Select a Job"}</span>
-                                      <ChevronDown className="h-4 w-4" />
-                                  </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
-                                  <DropdownMenuLabel>Available Jobs</DropdownMenuLabel>
-                                  <DropdownMenuSeparator />
-                                  {allJobs.map((j) => (
-                                      <DropdownMenuItem key={j._id} onSelect={() => { setJob(j); setIsEditingJob(false); }}>
-                                          {j.name}
-                                      </DropdownMenuItem>
-                                  ))}
-                              </DropdownMenuContent>
-                          </DropdownMenu>
-                      </div>
-                  )}
-                </div>
-                <Card className="w-full gap-0.5 p-2 mt-2">
-                    <CardHeader className="p-2 pb-0">
-                        <CardTitle className="text-sm font-medium flex items-center justify-between">
-                            Manatal Profile
-                            {manatalCandidate && (
-                                <a href={`https://app.manatal.com/candidates/${manatalCandidate.id}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                                    <ExternalLink className="h-3 w-3 text-muted-foreground hover:text-primary"/>
-                                </a>
-                            )}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-2 space-y-2">
-                        {isManatalLoading ? (
-                            <>
-                                <Skeleton className="h-3 w-3/4" />
-                                <Skeleton className="h-3 w-1/2" />
-                            </>
-                        ) : manatalCandidate ? (
-                            <div className="text-xs space-y-1">
-                                <p><span className="font-semibold">Name:</span> {manatalCandidate.full_name}</p>
-                                <p><span className="font-semibold">Current Position:</span> {manatalCandidate.current_position}</p>
-                                <p><span className="font-semibold">Resume:</span><a href={manatalCandidate.resume} target="_blank" rel="noopener noreferrer" className="text-blue-600 pl-1 text-md hover:underline">See Resume</a> </p>
-                                {manatalCandidate.headline && <p><span className="font-semibold">Headline:</span> {manatalCandidate.headline}</p>}
-                            </div>
-                        ) : (
-                            <p className="text-xs text-muted-foreground">Not found in Manatal.</p>
-                        )}
-                    </CardContent>
-                </Card>
-                {(webhookResponse || candidate.status === 'pass' || candidate.status === 'fail') && (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="outline" className="w-full mt-2" disabled={isReevaluating}>
-                        {isReevaluating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-                        Re-evaluate
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will reset the evaluation status to 'pending' and delete the current AI summary and manager comment. This action cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleReevaluate}>Confirm</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+              <div className="text-base font-semibold wrap-break-word">{candidate.candidateName}</div>
+              {candidate.positionMatch && (
+                <div className="text-xs text-muted-foreground mt-0.5 wrap-break-word">{candidate.positionMatch}</div>
+              )}
+              <div className="mt-3 flex items-center gap-2 flex-wrap justify-center">
+                <Badge variant={statusVariant} className="capitalize">{status}</Badge>
+                {candidate.recordingLink && (
+                  <a
+                    href={candidate.recordingLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                  >
+                    <LucideFileVideo className="h-3 w-3" />
+                    Recording
+                  </a>
                 )}
               </div>
-
-              
-
             </div>
-            
 
-            <div className="grid grid-cols-1 gap-6 min-w-0">
-                <div className="space-y-6 min-w-0">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle>Interview Notes & Transcript</CardTitle>
-                            <Button variant="outline" size="icon" onClick={() => setIsNotesOverlayVisible(true)}>
-                                <Maximize className="h-4 w-4" />
-                            </Button>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="bg-muted rounded-lg p-4 h-96 overflow-auto">
-                            <pre className="whitespace-pre-wrap break-words text-sm font-mono leading-relaxed">
-                                {candidate.content}
-                            </pre>
-                            </div>
-                        </CardContent>
-                    </Card>
-
+            {/* Email */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Email</div>
+                {!isEditingEmail && (
+                  <Button size="icon" variant="ghost" onClick={handleEmailEdit} className="h-6 w-6">
+                    <Pencil className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
+              {isEditingEmail ? (
+                <div className="flex items-center gap-1">
+                  <Input
+                    type="email"
+                    value={editedEmail}
+                    onChange={(e) => setEditedEmail(e.target.value)}
+                    className="h-8 flex-1 text-xs"
+                    placeholder="Enter email address"
+                    disabled={isSavingEmail}
+                  />
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={handleEmailSave}
+                    disabled={isSavingEmail}
+                    className="h-8 w-8"
+                  >
+                    {isSavingEmail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={handleEmailCancel}
+                    disabled={isSavingEmail}
+                    className="h-8 w-8"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
-                <div className="space-y-6 flex flex-col min-w-0">
-                    <Card className={'w-full min-h-150px'}>
-                        <CardHeader>
-                            <CardTitle>Comments</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="space-y-3">
-                                {comments.length === 0 ? (
-                                    <p className="text-sm text-muted-foreground italic">No comments yet. Be the first to add one.</p>
-                                ) : (
-                                    comments.map((c) => {
-                                        const isAuthor = currentUserId && String(c.authorId) === String(currentUserId);
-                                        const isEditing = editingCommentId === c._id;
-                                        return (
-                                            <div key={c._id} className="rounded-md border bg-muted/30 p-3">
-                                                <div className="flex items-start gap-3">
-                                                    {c.authorImage ? (
-                                                        // eslint-disable-next-line @next/next/no-img-element
-                                                        <img
-                                                            src={c.authorImage}
-                                                            alt={c.authorName || 'User'}
-                                                            className="h-8 w-8 rounded-full shrink-0"
-                                                        />
-                                                    ) : (
-                                                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium shrink-0">
-                                                            {(c.authorName || c.authorEmail || '?').charAt(0).toUpperCase()}
-                                                        </div>
-                                                    )}
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center justify-between gap-2 flex-wrap">
-                                                            <div className="min-w-0">
-                                                                <p className="text-sm font-medium leading-tight break-words">
-                                                                    {c.authorName || c.authorEmail || 'Unknown user'}
-                                                                </p>
-                                                                <p className="text-xs text-muted-foreground">
-                                                                    {c.createdAt ? new Date(c.createdAt).toLocaleString() : ''}
-                                                                    {c.updatedAt && c.createdAt && c.updatedAt !== c.createdAt ? ' (edited)' : ''}
-                                                                </p>
-                                                            </div>
-                                                            {isAuthor && !isEditing && (
-                                                                <div className="flex gap-1 shrink-0">
-                                                                    <Button
-                                                                        size="icon"
-                                                                        variant="ghost"
-                                                                        className="h-7 w-7"
-                                                                        onClick={() => handleStartEditComment(c)}
-                                                                    >
-                                                                        <Pencil className="h-3 w-3" />
-                                                                    </Button>
-                                                                    <AlertDialog>
-                                                                        <AlertDialogTrigger asChild>
-                                                                            <Button
-                                                                                size="icon"
-                                                                                variant="ghost"
-                                                                                className="h-7 w-7 text-destructive hover:text-destructive"
-                                                                                disabled={deletingCommentId === c._id}
-                                                                            >
-                                                                                {deletingCommentId === c._id ? (
-                                                                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                                                                ) : (
-                                                                                    <Trash2 className="h-3 w-3" />
-                                                                                )}
-                                                                            </Button>
-                                                                        </AlertDialogTrigger>
-                                                                        <AlertDialogContent>
-                                                                            <AlertDialogHeader>
-                                                                                <AlertDialogTitle>Delete this comment?</AlertDialogTitle>
-                                                                                <AlertDialogDescription>
-                                                                                    This action cannot be undone.
-                                                                                </AlertDialogDescription>
-                                                                            </AlertDialogHeader>
-                                                                            <AlertDialogFooter>
-                                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                                <AlertDialogAction onClick={() => handleDeleteComment(c._id)}>
-                                                                                    Delete
-                                                                                </AlertDialogAction>
-                                                                            </AlertDialogFooter>
-                                                                        </AlertDialogContent>
-                                                                    </AlertDialog>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        {isEditing ? (
-                                                            <div className="mt-2 space-y-2">
-                                                                <Textarea
-                                                                    value={editedCommentText}
-                                                                    onChange={(e) => setEditedCommentText(e.target.value)}
-                                                                    className="min-h-[80px]"
-                                                                    disabled={isSavingComment}
-                                                                />
-                                                                <div className="flex justify-end gap-2">
-                                                                    <Button
-                                                                        size="sm"
-                                                                        variant="ghost"
-                                                                        onClick={handleCancelEditComment}
-                                                                        disabled={isSavingComment}
-                                                                    >
-                                                                        Cancel
-                                                                    </Button>
-                                                                    <Button
-                                                                        size="sm"
-                                                                        onClick={() => handleSaveComment(c._id)}
-                                                                        disabled={isSavingComment}
-                                                                    >
-                                                                        {isSavingComment && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
-                                                                        Save
-                                                                    </Button>
-                                                                </div>
-                                                            </div>
-                                                        ) : (
-                                                            <p className="mt-1 text-sm whitespace-pre-wrap [overflow-wrap:anywhere]">{c.text}</p>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })
-                                )}
-                            </div>
+              ) : (
+                <div className="text-sm break-all">{candidate.email || 'No email'}</div>
+              )}
+            </div>
 
-                            <div className="space-y-2 pt-2 border-t">
-                                <Textarea
-                                    placeholder="Add a comment..."
-                                    value={newComment}
-                                    onChange={(e) => setNewComment(e.target.value)}
-                                    className="min-h-[80px]"
-                                    disabled={isAddingComment || !currentUserId}
-                                />
-                                <div className="flex justify-end">
-                                    <Button
-                                        onClick={handleAddComment}
-                                        disabled={isAddingComment || !newComment.trim() || !currentUserId}
-                                        size="sm"
-                                    >
-                                        {isAddingComment ? (
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        ) : (
-                                            <Send className="mr-2 h-4 w-4" />
-                                        )}
-                                        Post Comment
-                                    </Button>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+            {/* Interview */}
+            <div className="border-t pt-3">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1.5">Interviewed</div>
+              <div className="flex items-center gap-1.5 text-sm flex-wrap">
+                <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <span>{candidate.interviewDate ? new Date(candidate.interviewDate).toLocaleDateString() : 'N/A'}</span>
+                {candidate.interviewTime && (
+                  <span className="text-muted-foreground">· {candidate.interviewTime}</span>
+                )}
+              </div>
+            </div>
 
-                    <Card className={'w-full min-h-150px'}>
-                        <CardHeader>
-                            <CardTitle>Manager Review</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <Textarea 
-                                placeholder="Add your comments here..."
-                                value={managerComment}
-                                onChange={(e) => setManagerComment(e.target.value)}
-                                className="h-[150px] w-full"
-                                readOnly={!!webhookResponse}
-                            />
-                            <div className="gap-2 flex flex-col sm:flex-row" style={{display: webhookResponse ? 'none' : 'flex'}}>
-                                <Button 
-                                    onClick={() => handleStatusChange('pass')} 
-                                    disabled={isSubmitting || candidate.appProperties?.status === 'pass'}
-                                    className="flex-1" 
-                                >
-                                    {isSubmitting === 'pass' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                    Pass
-                                </Button>
-                                <Button 
-                                    onClick={() => handleStatusChange('fail')} 
-                                    disabled={isSubmitting || candidate.appProperties?.status === 'fail'}
-                                    variant={'destructive'}
-                                    className="flex-1"
-                                >
-                                    {isSubmitting === 'fail' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                    Fail
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
+            {/* Job */}
+            <div className="border-t pt-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Job Position</div>
+                {job && !isEditingJob && (
+                  <Button size="icon" variant="ghost" onClick={() => setIsEditingJob(true)} className="h-6 w-6">
+                    <Pencil className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
+              {isJobLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
                 </div>
-                <div className="min-w-0">
-                  {webhookResponse && (
-                    <Card className="overflow-hidden">
-                      <CardHeader className="flex flex-row items-center justify-between gap-2">
-                        <CardTitle className="text-base sm:text-lg">AI Evaluation Summary</CardTitle>
-                        {!isEditing && (
-                          <Button variant="outline" size="icon" onClick={handleEdit} className="shrink-0">
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </CardHeader>
-                      <CardContent className="space-y-4 min-w-0">
-                        {isEditing ? (
-                          <>
-                            {Object.entries(editedWebhookResponse).map(([key, value]) => (
-                              <div key={key}>
-                                <h3 className="font-semibold text-foreground capitalize">{key.replace(/_/g, ' ')}</h3>
-                                {renderEditValue(value, [key])}
+              ) : job && !isEditingJob ? (
+                <div className="flex items-center gap-2">
+                  <div className="h-9 w-9 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    <Briefcase className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium truncate">{job.name}</div>
+                    {job.clickupTaskId && (
+                      <div className="text-[11px] text-muted-foreground font-mono truncate">{job.clickupTaskId}</div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {candidate.positionMatch && !job && (
+                    <p className="text-xs text-muted-foreground">Job not found. Select one below.</p>
+                  )}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="w-full justify-between h-9">
+                        <span className="truncate">{job ? job.name : 'Select a Job'}</span>
+                        <ChevronDown className="h-4 w-4 shrink-0" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+                      <DropdownMenuLabel>Available Jobs</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {allJobs.map((j) => (
+                        <DropdownMenuItem key={j._id} onSelect={() => { setJob(j); setIsEditingJob(false); }}>
+                          {j.name}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              )}
+            </div>
+
+            {/* Manatal */}
+            <div className="border-t pt-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Manatal Profile</div>
+                {manatalCandidate && (
+                  <a
+                    href={`https://app.manatal.com/candidates/${manatalCandidate.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-muted-foreground hover:text-primary"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                )}
+              </div>
+              {isManatalLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-3 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              ) : manatalCandidate ? (
+                <div className="space-y-1.5">
+                  <div className="text-sm font-medium wrap-break-word">{manatalCandidate.full_name}</div>
+                  {manatalCandidate.current_position && (
+                    <div className="text-xs text-muted-foreground leading-snug">{manatalCandidate.current_position}</div>
+                  )}
+                  {manatalCandidate.headline && (
+                    <div className="text-[11px] text-muted-foreground italic wrap-break-word">"{manatalCandidate.headline}"</div>
+                  )}
+                  {manatalCandidate.resume && (
+                    <a
+                      href={manatalCandidate.resume}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
+                    >
+                      <FileText className="h-3 w-3" />
+                      View resume
+                    </a>
+                  )}
+                </div>
+              ) : (
+                <div className="text-xs text-muted-foreground italic">Not found in Manatal</div>
+              )}
+            </div>
+
+            {/* Slack Channel */}
+            <div className="border-t pt-3">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1.5">Slack Channel</div>
+              <div className="flex items-center gap-1.5 text-sm">
+                <Slack className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <span className="font-mono text-xs break-all">{session?.slackChannel || '—'}</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        {/* Main */}
+        <main className="flex-1 flex flex-col min-w-0">
+          {/* Tabs */}
+          <div className="flex items-center gap-1 px-3 sm:px-5 border-b bg-background sticky top-14 z-20 overflow-x-auto">
+            {tabs.map(tab => {
+              const TabIcon = tab.icon;
+              const isActive = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={cn(
+                    "relative h-11 px-3 text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap focus:outline-none",
+                    isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <TabIcon className="h-3.5 w-3.5" />
+                  {tab.label}
+                  {tab.badge != null && (
+                    <span className={cn(
+                      "ml-0.5 inline-flex items-center justify-center min-w-4.5 h-4.5 px-1 rounded text-[10px] font-semibold",
+                      isActive ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                    )}>
+                      {tab.badge}
+                    </span>
+                  )}
+                  {isActive && <span className="absolute inset-x-2 bottom-0 h-0.5 bg-primary rounded-full" />}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Tab content */}
+          <div className="flex-1 overflow-y-auto">
+            {activeTab === 'ai' && (
+              <div className="p-4 sm:p-6 max-w-full">
+                <div className="flex items-start justify-between gap-3 mb-5">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="h-9 w-9 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                      <Sparkles className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold">AI Evaluation Summary</div>
+                      <div className="text-[11px] text-muted-foreground">Generated from interview transcript · edit to refine</div>
+                    </div>
+                  </div>
+                  {webhookResponse && !isEditing && (
+                    <Button variant="outline" size="sm" onClick={handleEdit} className="shrink-0 h-8">
+                      <Pencil className="h-3.5 w-3.5 mr-1.5" />
+                      Edit
+                    </Button>
+                  )}
+                </div>
+
+                {!webhookResponse ? (
+                  <Card>
+                    <CardContent className="py-12 text-center">
+                      <Sparkles className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">No AI evaluation yet for this candidate.</p>
+                      <p className="text-xs text-muted-foreground/70 mt-1">Submit a Pass/Fail in Manager Review to generate one.</p>
+                    </CardContent>
+                  </Card>
+                ) : isEditing ? (
+                  <Card>
+                    <CardContent className="py-5 space-y-4 min-w-0">
+                      {Object.entries(editedWebhookResponse || {}).map(([key, value]) => (
+                        <div key={key}>
+                          <h3 className="font-semibold text-foreground capitalize">{key.replace(/_/g, ' ')}</h3>
+                          {renderEditValue(value, [key])}
+                        </div>
+                      ))}
+                      <div className="flex space-x-2 justify-end pt-2 border-t">
+                        <Button variant="ghost" onClick={handleCancel} disabled={isSaving}>Cancel</Button>
+                        <Button onClick={handleSave} disabled={isSaving}>
+                          {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          Save
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <>
+                    {(featuredRecommendation || featuredScore) && (
+                      <div className="rounded-xl border border-primary/20 bg-linear-to-br from-primary/5 to-transparent p-4 mb-4">
+                        <div className="flex items-start justify-between gap-4 flex-wrap">
+                          {featuredRecommendation && (
+                            <div className="min-w-0 flex-1">
+                              <div className="text-[10px] uppercase tracking-wider text-primary font-semibold">Recommendation</div>
+                              <div className="text-base font-semibold mt-1 wrap-break-word">
+                                {typeof featuredRecommendation === 'string' ? featuredRecommendation : renderViewValue(featuredRecommendation)}
                               </div>
-                            ))}
-                            <div className="flex space-x-2 justify-end">
-                              <Button variant="ghost" onClick={handleCancel} disabled={isSaving}>Cancel</Button>
-                              <Button onClick={handleSave} disabled={isSaving}>
-                                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Save
-                              </Button>
                             </div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="divide-y divide-border/60">
-                              {Object.entries(webhookResponse).map(([key, value]) => (
-                                <div key={key} className="py-3 first:pt-0 last:pb-0">
-                                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                                    {key.replace(/_/g, ' ')}
-                                  </h3>
-                                  <div>{renderViewValue(value)}</div>
-                                </div>
-                              ))}
+                          )}
+                          {featuredScore && (
+                            <div className="text-right shrink-0">
+                              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Fit Score</div>
+                              <div className="text-2xl font-semibold text-primary mt-1 tabular-nums">
+                                {typeof featuredScore === 'string' || typeof featuredScore === 'number' ? featuredScore : renderViewValue(featuredScore)}
+                              </div>
                             </div>
-                            <div className="space-y-2">
-                              <Button
-                                  onClick={handleSendToSlack}
-                                  disabled={isSendingToSlack || !user?.slackAccessToken || isManatalLoading}
-                                  className="w-full mt-4"
-                              >
-                                  {isSendingToSlack ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  ) : isManatalLoading ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  ) : null}
-                                  {isManatalLoading ? 'Loading Profile...' : 'Send Notes'}
-                              </Button>
-                            </div>
-                          </>
-                        )}
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    <Card>
+                      <CardContent className="py-5 space-y-5 min-w-0">
+                        {otherWebhookEntries.map(([key, value]) => (
+                          <section key={key}>
+                            <h3 className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-2">
+                              {key.replace(/_/g, ' ')}
+                            </h3>
+                            <div>{renderViewValue(value)}</div>
+                          </section>
+                        ))}
                       </CardContent>
                     </Card>
-                  )}
-                </div>  
+                  </>
+                )}
+              </div>
+            )}
 
-            </div>
-        </div>
-      </main>
-    
+            {activeTab === 'transcript' && (
+              <div className="p-4 sm:p-6 max-w-full">
+                <div className="flex items-center justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="h-9 w-9 rounded-md bg-muted text-foreground flex items-center justify-center shrink-0">
+                      <FileText className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold">Interview Transcript</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {candidate.content ? `${candidate.content.length.toLocaleString()} characters · automated transcription` : 'No transcript available'}
+                      </div>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => setIsNotesOverlayVisible(true)} className="h-8 shrink-0">
+                    <Maximize className="h-3.5 w-3.5 mr-1.5" />
+                    Expand
+                  </Button>
+                </div>
+                <Card>
+                  <CardContent className="py-5">
+                    <div className="rounded-lg bg-muted/50 p-4 sm:p-5 max-h-[70vh] overflow-auto">
+                      <pre className="whitespace-pre-wrap wrap-break-word text-sm font-mono leading-relaxed">
+                        {candidate.content}
+                      </pre>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {activeTab === 'comments' && (
+              <div className="p-4 sm:p-6 max-w-full">
+                <div className="flex items-center gap-2 mb-5">
+                  <div className="h-9 w-9 rounded-md bg-muted text-foreground flex items-center justify-center shrink-0">
+                    <MessageSquare className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold">Team Comments</div>
+                    <div className="text-[11px] text-muted-foreground">
+                      {comments.length} comment{comments.length === 1 ? '' : 's'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3 mb-5">
+                  {comments.length === 0 ? (
+                    <p className="text-sm text-muted-foreground italic">No comments yet. Be the first to add one.</p>
+                  ) : (
+                    comments.map((c) => {
+                      const isAuthor = currentUserId && String(c.authorId) === String(currentUserId);
+                      const isEditingThis = editingCommentId === c._id;
+                      return (
+                        <div key={c._id} className="rounded-lg border bg-card p-3.5">
+                          <div className="flex items-start gap-3">
+                            {c.authorImage ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={c.authorImage}
+                                alt={c.authorName || 'User'}
+                                className="h-8 w-8 rounded-full shrink-0"
+                              />
+                            ) : (
+                              <div className={cn(
+                                "h-8 w-8 rounded-full flex items-center justify-center text-xs font-semibold shrink-0",
+                                isAuthor ? "bg-primary/10 text-primary" : "bg-muted text-foreground"
+                              )}>
+                                {(c.authorName || c.authorEmail || '?').charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2 flex-wrap">
+                                <div className="flex items-baseline gap-2 min-w-0 flex-wrap">
+                                  <span className="text-sm font-medium wrap-break-word">
+                                    {c.authorName || c.authorEmail || 'Unknown user'}
+                                  </span>
+                                  <span className="text-[11px] text-muted-foreground">
+                                    {c.createdAt ? new Date(c.createdAt).toLocaleString() : ''}
+                                    {c.updatedAt && c.createdAt && c.updatedAt !== c.createdAt ? ' (edited)' : ''}
+                                  </span>
+                                </div>
+                                {isAuthor && !isEditingThis && (
+                                  <div className="flex gap-1 shrink-0">
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-7 w-7"
+                                      onClick={() => handleStartEditComment(c)}
+                                    >
+                                      <Pencil className="h-3 w-3" />
+                                    </Button>
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button
+                                          size="icon"
+                                          variant="ghost"
+                                          className="h-7 w-7 text-destructive hover:text-destructive"
+                                          disabled={deletingCommentId === c._id}
+                                        >
+                                          {deletingCommentId === c._id ? (
+                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                          ) : (
+                                            <Trash2 className="h-3 w-3" />
+                                          )}
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Delete this comment?</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            This action cannot be undone.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                          <AlertDialogAction onClick={() => handleDeleteComment(c._id)}>
+                                            Delete
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  </div>
+                                )}
+                              </div>
+                              {isEditingThis ? (
+                                <div className="mt-2 space-y-2">
+                                  <Textarea
+                                    value={editedCommentText}
+                                    onChange={(e) => setEditedCommentText(e.target.value)}
+                                    className="min-h-20"
+                                    disabled={isSavingComment}
+                                  />
+                                  <div className="flex justify-end gap-2">
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={handleCancelEditComment}
+                                      disabled={isSavingComment}
+                                    >
+                                      Cancel
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      onClick={() => handleSaveComment(c._id)}
+                                      disabled={isSavingComment}
+                                    >
+                                      {isSavingComment && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+                                      Save
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="mt-1 text-sm leading-relaxed whitespace-pre-wrap wrap-anywhere">{c.text}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                <div className="rounded-lg border bg-card">
+                  <Textarea
+                    placeholder="Add a comment for the hiring team..."
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    className="min-h-22.5 border-0 rounded-b-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-y"
+                    disabled={isAddingComment || !currentUserId}
+                  />
+                  <div className="flex items-center justify-between px-3 py-2 border-t bg-muted/40 rounded-b-lg">
+                    <div className="text-[11px] text-muted-foreground">
+                      {!currentUserId ? 'Sign in to comment' : 'Be respectful and constructive'}
+                    </div>
+                    <Button
+                      onClick={handleAddComment}
+                      disabled={isAddingComment || !newComment.trim() || !currentUserId}
+                      size="sm"
+                    >
+                      {isAddingComment ? (
+                        <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Send className="mr-2 h-3.5 w-3.5" />
+                      )}
+                      Post Comment
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'review' && (
+              <div className="p-4 sm:p-6 max-w-full">
+                <div className="flex items-center gap-2 mb-5">
+                  <div className="h-9 w-9 rounded-md bg-muted text-foreground flex items-center justify-center shrink-0">
+                    <UserIcon className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold">Manager Review</div>
+                    <div className="text-[11px] text-muted-foreground">Your decision finalizes this candidate's status</div>
+                  </div>
+                </div>
+
+                <Card className="mb-4">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Notes</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <Textarea
+                      placeholder="What did you think? Add context for the team..."
+                      value={managerComment}
+                      onChange={(e) => setManagerComment(e.target.value)}
+                      className="min-h-35"
+                      readOnly={!!webhookResponse}
+                    />
+                    {!!webhookResponse && (
+                      <div className="mt-2 text-[11px] text-muted-foreground">
+                        Locked — decision recorded. Use Re-evaluate from the top bar to reopen.
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Decision</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <button
+                        onClick={() => handleStatusChange('pass')}
+                        disabled={isSubmitting || status === 'pass' || !!webhookResponse}
+                        className={cn(
+                          "group rounded-lg border-2 p-4 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+                          status === 'pass' ? "border-green-500 bg-green-500/10" : "border-border hover:border-green-500/60 bg-card",
+                          (isSubmitting || (!!webhookResponse && status !== 'pass')) && "opacity-50 cursor-not-allowed"
+                        )}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className={cn(
+                            "h-6 w-6 rounded-full flex items-center justify-center",
+                            status === 'pass' ? "bg-green-500 text-white" : "bg-green-500/10 text-green-600"
+                          )}>
+                            {isSubmitting === 'pass' ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Check className="h-3.5 w-3.5" />
+                            )}
+                          </div>
+                          <span className="text-sm font-semibold">Pass</span>
+                        </div>
+                        <div className="text-[11px] text-muted-foreground">Move to next stage</div>
+                      </button>
+                      <button
+                        onClick={() => handleStatusChange('fail')}
+                        disabled={isSubmitting || status === 'fail' || !!webhookResponse}
+                        className={cn(
+                          "group rounded-lg border-2 p-4 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+                          status === 'fail' ? "border-destructive bg-destructive/10" : "border-border hover:border-destructive/60 bg-card",
+                          (isSubmitting || (!!webhookResponse && status !== 'fail')) && "opacity-50 cursor-not-allowed"
+                        )}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className={cn(
+                            "h-6 w-6 rounded-full flex items-center justify-center",
+                            status === 'fail' ? "bg-destructive text-white" : "bg-destructive/10 text-destructive"
+                          )}>
+                            {isSubmitting === 'fail' ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <X className="h-3.5 w-3.5" />
+                            )}
+                          </div>
+                          <span className="text-sm font-semibold">Fail</span>
+                        </div>
+                        <div className="text-[11px] text-muted-foreground">Do not advance</div>
+                      </button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+    </div>
   );
 };
 
