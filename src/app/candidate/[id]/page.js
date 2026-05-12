@@ -625,9 +625,9 @@ const CandidateDetailPage = () => {
   ];
 
   return (
-    <div className="h-[calc(100dvh-57px)] sm:h-[calc(100dvh-65px)] overflow-hidden flex flex-col bg-background">
+    <div className="lg:h-[calc(100dvh-65px)] lg:overflow-hidden flex flex-col bg-background">
       {/* Top bar */}
-      <header className="shrink-0 h-14 flex items-center gap-2 sm:gap-3 px-3 sm:px-5 border-b bg-background/80 backdrop-blur-md">
+      <header className="shrink-0 sticky top-0 z-30 lg:static h-14 flex items-center gap-2 sm:gap-3 px-3 sm:px-5 border-b bg-background/80 backdrop-blur-md">
         <Link href="/">
           <Button variant="ghost" size="sm" className="h-8">
             <ArrowLeft className="h-4 w-4 sm:mr-1" />
@@ -733,9 +733,9 @@ const CandidateDetailPage = () => {
         </div>
       )}
 
-      <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row lg:min-h-0 lg:overflow-hidden">
         {/* Left rail */}
-        <aside className="w-full lg:w-80 lg:shrink-0 border-b lg:border-b-0 lg:border-r bg-muted/30 overflow-y-auto">
+        <aside className="w-full lg:w-80 lg:shrink-0 border-b lg:border-b-0 lg:border-r bg-muted/30 lg:overflow-y-auto">
           <div className="p-5 space-y-4">
             {/* Identity */}
             <div className="flex flex-col items-center text-center pb-4 border-b">
@@ -929,9 +929,9 @@ const CandidateDetailPage = () => {
         </aside>
 
         {/* Main */}
-        <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
+        <main className="flex-1 flex flex-col min-w-0 lg:min-h-0 lg:overflow-hidden">
           {/* Tabs */}
-          <div className="shrink-0 flex items-center gap-1 px-3 sm:px-5 border-b bg-background overflow-x-auto">
+          <div className="shrink-0 sticky top-14.25 sm:top-16.25 z-20 lg:static flex justify-around items-center gap-1 px-3 sm:px-5 border-b bg-background sm:w-full">
             {tabs.map(tab => {
               const TabIcon = tab.icon;
               const isActive = activeTab === tab.key;
@@ -945,7 +945,7 @@ const CandidateDetailPage = () => {
                   )}
                 >
                   <TabIcon className="h-3.5 w-3.5" />
-                  {tab.label}
+                  <span className={cn("sm:inline", isActive ? "inline" : "hidden")}>{tab.label}</span>
                   {tab.badge != null && (
                     <span className={cn(
                       "ml-0.5 inline-flex items-center justify-center min-w-4.5 h-4.5 px-1 rounded text-[10px] font-semibold",
@@ -961,9 +961,9 @@ const CandidateDetailPage = () => {
           </div>
 
           {/* Tab content */}
-          <div className="flex-1 overflow-hidden min-h-0">
+          <div className="flex-1 lg:overflow-hidden lg:min-h-0">
             {activeTab === 'ai' && (
-              <div className="h-full flex flex-col">
+              <div className="h-[calc(100dvh-101px)] sm:h-[calc(100dvh-109px)] lg:h-full flex flex-col">
                 <div className="shrink-0 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 flex items-start justify-between gap-3">
                   <div className="flex items-center gap-2 min-w-0">
                     <div className="h-9 w-9 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
@@ -1056,7 +1056,7 @@ const CandidateDetailPage = () => {
             )}
 
             {activeTab === 'transcript' && (
-              <div className="h-full flex flex-col">
+              <div className="h-[calc(100dvh-101px)] sm:h-[calc(100dvh-109px)] lg:h-full flex flex-col">
                 <div className="shrink-0 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2 min-w-0">
                     <div className="h-9 w-9 rounded-md bg-muted text-foreground flex items-center justify-center shrink-0">
@@ -1083,7 +1083,7 @@ const CandidateDetailPage = () => {
             )}
 
             {activeTab === 'comments' && (
-              <div className="h-full flex flex-col">
+              <div className="h-[calc(100dvh-101px)] sm:h-[calc(100dvh-109px)] lg:h-full flex flex-col">
                 <div className="shrink-0 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 flex items-center gap-2">
                   <div className="h-9 w-9 rounded-md bg-muted text-foreground flex items-center justify-center shrink-0">
                     <MessageSquare className="h-4 w-4" />
@@ -1248,7 +1248,7 @@ const CandidateDetailPage = () => {
             )}
 
             {activeTab === 'review' && (
-              <div className="h-full flex flex-col">
+              <div className="h-[calc(100dvh-101px)] sm:h-[calc(100dvh-109px)] lg:h-full flex flex-col">
                 <div className="shrink-0 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 flex items-center gap-2">
                   <div className="h-9 w-9 rounded-md bg-muted text-foreground flex items-center justify-center shrink-0">
                     <UserIcon className="h-4 w-4" />
