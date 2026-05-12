@@ -303,7 +303,7 @@ const Header = () => {
               <DropdownMenu>
 
                   <div className="flex items-center gap-2 sm:gap-4 ">
-                    <Badge variant="outline" className="hidden sm:inline-flex text-sm font-medium max-w-[160px] truncate">{session.user.name}</Badge>
+                    <Badge variant="outline" className="hidden sm:inline-flex text-sm font-medium max-w-40 truncate">{session.user.name}</Badge>
                     <img
                       src={session.user.image}
                       alt="Profile"

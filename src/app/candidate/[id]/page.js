@@ -622,9 +622,9 @@ const CandidateDetailPage = () => {
   ];
 
   return (
-    <div className="h-full flex flex-col bg-background">
+    <div className="h-[calc(100dvh-57px)] sm:h-[calc(100dvh-65px)] overflow-hidden flex flex-col bg-background">
       {/* Top bar */}
-      <header className="sticky top-0 z-30 h-14 flex items-center gap-2 sm:gap-3 px-3 sm:px-5 border-b bg-background/80 backdrop-blur-md">
+      <header className="shrink-0 h-14 flex items-center gap-2 sm:gap-3 px-3 sm:px-5 border-b bg-background/80 backdrop-blur-md">
         <Link href="/">
           <Button variant="ghost" size="sm" className="h-8">
             <ArrowLeft className="h-4 w-4 sm:mr-1" />
@@ -730,9 +730,9 @@ const CandidateDetailPage = () => {
         </div>
       )}
 
-      <div className="flex-1 flex flex-col lg:flex-row min-h-0">
+      <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
         {/* Left rail */}
-        <aside className="w-full lg:w-80 lg:shrink-0 border-b lg:border-b-0 lg:border-r bg-muted/30">
+        <aside className="w-full lg:w-80 lg:shrink-0 border-b lg:border-b-0 lg:border-r bg-muted/30 overflow-y-auto">
           <div className="p-5 space-y-4">
             {/* Identity */}
             <div className="flex flex-col items-center text-center pb-4 border-b">
@@ -926,9 +926,9 @@ const CandidateDetailPage = () => {
         </aside>
 
         {/* Main */}
-        <main className="flex-1 flex flex-col min-w-0">
+        <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
           {/* Tabs */}
-          <div className="flex items-center gap-1 px-3 sm:px-5 border-b bg-background sticky top-14 z-20 overflow-x-auto">
+          <div className="shrink-0 flex items-center gap-1 px-3 sm:px-5 border-b bg-background overflow-x-auto">
             {tabs.map(tab => {
               const TabIcon = tab.icon;
               const isActive = activeTab === tab.key;
@@ -958,7 +958,7 @@ const CandidateDetailPage = () => {
           </div>
 
           {/* Tab content */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto min-h-0">
             {activeTab === 'ai' && (
               <div className="p-4 sm:p-6 max-w-full">
                 <div className="flex items-start justify-between gap-3 mb-5">
