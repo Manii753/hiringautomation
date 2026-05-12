@@ -31,11 +31,10 @@ export default function RootLayout({ children }) {
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Providers>
           
-          <div className="sticky top-0 z-50 bg-background shadow ">
+          <div className="sticky top-0 z-50 h-14.25 sm:h-16.25 bg-background shadow">
             <Suspense fallback={<HeaderSkeleton/>}>
               <Header />
             </Suspense>
-            
           </div>
           <main className="bg-background text-foreground">
             {children}
