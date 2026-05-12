@@ -158,6 +158,7 @@ export async function GET(request, context) {
       status: fileMetadata.data.appProperties?.status || "pending",
       webhookResponse: candidate?.webhookResponse || null,
       managerComment: candidate?.managerComment || "",
+      comments: candidate?.comments || [],
       ...parsedData,
       email: hasUsableEmail(candidate?.email) ? candidate.email : driveEmail || parsedData.email,
       recordingId: matchingRecording ? matchingRecording.id : null,

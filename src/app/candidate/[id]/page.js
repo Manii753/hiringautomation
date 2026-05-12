@@ -18,7 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ArrowLeft,  FileVideo,  Loader2, LucideFileVideo, Pencil, Maximize, X, RefreshCw, ChevronDown, ExternalLink, Check } from 'lucide-react';
+import { ArrowLeft,  FileVideo,  Loader2, LucideFileVideo, Pencil, Maximize, X, RefreshCw, ChevronDown, ExternalLink, Check, Trash2, Send } from 'lucide-react';
 import Link from 'next/link';
 import CandidateDetailSkeleton from '@/components/candidateSkelton';
 import {
@@ -64,6 +64,17 @@ const CandidateDetailPage = () => {
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [editedEmail, setEditedEmail] = useState('');
   const [isSavingEmail, setIsSavingEmail] = useState(false);
+
+  // Comments states
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState('');
+  const [isAddingComment, setIsAddingComment] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editedCommentText, setEditedCommentText] = useState('');
+  const [isSavingComment, setIsSavingComment] = useState(false);
+  const [deletingCommentId, setDeletingCommentId] = useState(null);
+
+  const currentUserId = session?.user?.id || session?.user?._id || session?.user?.email || null;
 
 
   useEffect(() => {
@@ -145,13 +156,97 @@ const CandidateDetailPage = () => {
       } else {
         setManagerComment('');
       }
-    
-      
-      
+
+      setComments(Array.isArray(data.comments) ? data.comments : []);
+
       setLoading(false);
     } catch (err) {
       setLoading(false);
     }
+  };
+
+  const handleAddComment = async () => {
+    if (!newComment.trim()) {
+      toast.error('Comment cannot be empty');
+      return;
+    }
+    setIsAddingComment(true);
+    try {
+      const response = await fetch(`/api/candidate/${candidateId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: newComment }),
+      });
+      if (response.ok) {
+        const { comment } = await response.json();
+        setComments(prev => [...prev, comment]);
+        setNewComment('');
+        toast.success('Comment added');
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        toast.error(errorData.error || 'Failed to add comment');
+      }
+    } catch (error) {
+      toast.error('An error occurred while adding comment');
+    }
+    setIsAddingComment(false);
+  };
+
+  const handleStartEditComment = (comment) => {
+    setEditingCommentId(comment._id);
+    setEditedCommentText(comment.text);
+  };
+
+  const handleCancelEditComment = () => {
+    setEditingCommentId(null);
+    setEditedCommentText('');
+  };
+
+  const handleSaveComment = async (commentId) => {
+    if (!editedCommentText.trim()) {
+      toast.error('Comment cannot be empty');
+      return;
+    }
+    setIsSavingComment(true);
+    try {
+      const response = await fetch(`/api/candidate/${candidateId}/comments/${commentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: editedCommentText }),
+      });
+      if (response.ok) {
+        const { comment } = await response.json();
+        setComments(prev => prev.map(c => (c._id === commentId ? comment : c)));
+        setEditingCommentId(null);
+        setEditedCommentText('');
+        toast.success('Comment updated');
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        toast.error(errorData.error || 'Failed to update comment');
+      }
+    } catch (error) {
+      toast.error('An error occurred while saving comment');
+    }
+    setIsSavingComment(false);
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    setDeletingCommentId(commentId);
+    try {
+      const response = await fetch(`/api/candidate/${candidateId}/comments/${commentId}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        setComments(prev => prev.filter(c => c._id !== commentId));
+        toast.success('Comment deleted');
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        toast.error(errorData.error || 'Failed to delete comment');
+      }
+    } catch (error) {
+      toast.error('An error occurred while deleting comment');
+    }
+    setDeletingCommentId(null);
   };
 
   useEffect(() => {
@@ -766,7 +861,152 @@ const CandidateDetailPage = () => {
                     </Card>
 
                 </div>
-                <div className="space-y-6 flex min-w-0">
+                <div className="space-y-6 flex flex-col min-w-0">
+                    <Card className={'w-full min-h-150px'}>
+                        <CardHeader>
+                            <CardTitle>Comments</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-3">
+                                {comments.length === 0 ? (
+                                    <p className="text-sm text-muted-foreground italic">No comments yet. Be the first to add one.</p>
+                                ) : (
+                                    comments.map((c) => {
+                                        const isAuthor = currentUserId && String(c.authorId) === String(currentUserId);
+                                        const isEditing = editingCommentId === c._id;
+                                        return (
+                                            <div key={c._id} className="rounded-md border bg-muted/30 p-3">
+                                                <div className="flex items-start gap-3">
+                                                    {c.authorImage ? (
+                                                        // eslint-disable-next-line @next/next/no-img-element
+                                                        <img
+                                                            src={c.authorImage}
+                                                            alt={c.authorName || 'User'}
+                                                            className="h-8 w-8 rounded-full shrink-0"
+                                                        />
+                                                    ) : (
+                                                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium shrink-0">
+                                                            {(c.authorName || c.authorEmail || '?').charAt(0).toUpperCase()}
+                                                        </div>
+                                                    )}
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                            <div className="min-w-0">
+                                                                <p className="text-sm font-medium leading-tight break-words">
+                                                                    {c.authorName || c.authorEmail || 'Unknown user'}
+                                                                </p>
+                                                                <p className="text-xs text-muted-foreground">
+                                                                    {c.createdAt ? new Date(c.createdAt).toLocaleString() : ''}
+                                                                    {c.updatedAt && c.createdAt && c.updatedAt !== c.createdAt ? ' (edited)' : ''}
+                                                                </p>
+                                                            </div>
+                                                            {isAuthor && !isEditing && (
+                                                                <div className="flex gap-1 shrink-0">
+                                                                    <Button
+                                                                        size="icon"
+                                                                        variant="ghost"
+                                                                        className="h-7 w-7"
+                                                                        onClick={() => handleStartEditComment(c)}
+                                                                    >
+                                                                        <Pencil className="h-3 w-3" />
+                                                                    </Button>
+                                                                    <AlertDialog>
+                                                                        <AlertDialogTrigger asChild>
+                                                                            <Button
+                                                                                size="icon"
+                                                                                variant="ghost"
+                                                                                className="h-7 w-7 text-destructive hover:text-destructive"
+                                                                                disabled={deletingCommentId === c._id}
+                                                                            >
+                                                                                {deletingCommentId === c._id ? (
+                                                                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                                                                ) : (
+                                                                                    <Trash2 className="h-3 w-3" />
+                                                                                )}
+                                                                            </Button>
+                                                                        </AlertDialogTrigger>
+                                                                        <AlertDialogContent>
+                                                                            <AlertDialogHeader>
+                                                                                <AlertDialogTitle>Delete this comment?</AlertDialogTitle>
+                                                                                <AlertDialogDescription>
+                                                                                    This action cannot be undone.
+                                                                                </AlertDialogDescription>
+                                                                            </AlertDialogHeader>
+                                                                            <AlertDialogFooter>
+                                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                                <AlertDialogAction onClick={() => handleDeleteComment(c._id)}>
+                                                                                    Delete
+                                                                                </AlertDialogAction>
+                                                                            </AlertDialogFooter>
+                                                                        </AlertDialogContent>
+                                                                    </AlertDialog>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        {isEditing ? (
+                                                            <div className="mt-2 space-y-2">
+                                                                <Textarea
+                                                                    value={editedCommentText}
+                                                                    onChange={(e) => setEditedCommentText(e.target.value)}
+                                                                    className="min-h-[80px]"
+                                                                    disabled={isSavingComment}
+                                                                />
+                                                                <div className="flex justify-end gap-2">
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="ghost"
+                                                                        onClick={handleCancelEditComment}
+                                                                        disabled={isSavingComment}
+                                                                    >
+                                                                        Cancel
+                                                                    </Button>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        onClick={() => handleSaveComment(c._id)}
+                                                                        disabled={isSavingComment}
+                                                                    >
+                                                                        {isSavingComment && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+                                                                        Save
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <p className="mt-1 text-sm whitespace-pre-wrap [overflow-wrap:anywhere]">{c.text}</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </div>
+
+                            <div className="space-y-2 pt-2 border-t">
+                                <Textarea
+                                    placeholder="Add a comment..."
+                                    value={newComment}
+                                    onChange={(e) => setNewComment(e.target.value)}
+                                    className="min-h-[80px]"
+                                    disabled={isAddingComment || !currentUserId}
+                                />
+                                <div className="flex justify-end">
+                                    <Button
+                                        onClick={handleAddComment}
+                                        disabled={isAddingComment || !newComment.trim() || !currentUserId}
+                                        size="sm"
+                                    >
+                                        {isAddingComment ? (
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <Send className="mr-2 h-4 w-4" />
+                                        )}
+                                        Post Comment
+                                    </Button>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
                     <Card className={'w-full min-h-150px'}>
                         <CardHeader>
                             <CardTitle>Manager Review</CardTitle>
