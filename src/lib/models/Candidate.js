@@ -1,5 +1,27 @@
 import mongoose from 'mongoose';
 
+const CommentSchema = new mongoose.Schema({
+  text: {
+    type: String,
+    required: true,
+  },
+  authorId: {
+    type: String,
+    required: true,
+  },
+  authorName: {
+    type: String,
+  },
+  authorEmail: {
+    type: String,
+  },
+  authorImage: {
+    type: String,
+  },
+}, {
+  timestamps: true,
+});
+
 const CandidateSchema = new mongoose.Schema({
   fileId: {
     type: String,
@@ -9,9 +31,13 @@ const CandidateSchema = new mongoose.Schema({
   email: {
     type: String,
   },
- 
+
   managerComment: {
     type: String,
+  },
+  comments: {
+    type: [CommentSchema],
+    default: [],
   },
   webhookResponse: {
     type: Object,
@@ -19,7 +45,7 @@ const CandidateSchema = new mongoose.Schema({
   expireAt: {
     type: Date,
     default: () => new Date(Date.now() + 1000 * 60 * 60 * 24 * 90), // 90 days from creation
-    index: { expires: 0 }, 
+    index: { expires: 0 },
   },
 }, {
   timestamps: true,
