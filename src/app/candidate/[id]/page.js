@@ -159,9 +159,11 @@ const CandidateDetailPage = () => {
       if (data.webhookResponse) {
         setWebhookResponse(data.webhookResponse);
         setEditedWebhookResponse(data.webhookResponse);
+        setActiveTab('ai');
       } else {
         setWebhookResponse(null);
         setEditedWebhookResponse(null);
+        setActiveTab('transcript');
       }
       if (data.managerComment) {
         setManagerComment(data.managerComment);
@@ -367,6 +369,7 @@ const CandidateDetailPage = () => {
         if (data.webhookData) {
           setWebhookResponse(data.webhookData);
           setEditedWebhookResponse(data.webhookData);
+          setActiveTab('ai');
         }
       } else {
         const errorData = await response.json();
