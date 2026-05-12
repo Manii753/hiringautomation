@@ -958,10 +958,10 @@ const CandidateDetailPage = () => {
           </div>
 
           {/* Tab content */}
-          <div className="flex-1 overflow-y-auto min-h-0">
+          <div className="flex-1 overflow-hidden min-h-0">
             {activeTab === 'ai' && (
-              <div className="p-4 sm:p-6 max-w-full">
-                <div className="flex items-start justify-between gap-3 mb-5">
+              <div className="h-full flex flex-col">
+                <div className="shrink-0 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 flex items-start justify-between gap-3">
                   <div className="flex items-center gap-2 min-w-0">
                     <div className="h-9 w-9 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
                       <Sparkles className="h-4 w-4" />
@@ -977,8 +977,20 @@ const CandidateDetailPage = () => {
                       Edit
                     </Button>
                   )}
+                  {webhookResponse && isEditing && (
+                    <div className="flex gap-2 shrink-0">
+                      <Button variant="ghost" size="sm" onClick={handleCancel} disabled={isSaving} className="h-8">
+                        Cancel
+                      </Button>
+                      <Button size="sm" onClick={handleSave} disabled={isSaving} className="h-8">
+                        {isSaving && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+                        Save
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
+                <div className="flex-1 overflow-y-auto min-h-0 px-4 sm:px-6 pb-4 sm:pb-6">
                 {!webhookResponse ? (
                   <Card>
                     <CardContent className="py-12 text-center">
@@ -996,13 +1008,6 @@ const CandidateDetailPage = () => {
                           {renderEditValue(value, [key])}
                         </div>
                       ))}
-                      <div className="flex space-x-2 justify-end pt-2 border-t">
-                        <Button variant="ghost" onClick={handleCancel} disabled={isSaving}>Cancel</Button>
-                        <Button onClick={handleSave} disabled={isSaving}>
-                          {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                          Save
-                        </Button>
-                      </div>
                     </CardContent>
                   </Card>
                 ) : (
@@ -1043,12 +1048,13 @@ const CandidateDetailPage = () => {
                     </Card>
                   </>
                 )}
+                </div>
               </div>
             )}
 
             {activeTab === 'transcript' && (
-              <div className="p-4 sm:p-6 max-w-full">
-                <div className="flex items-center justify-between gap-3 mb-4">
+              <div className="h-full flex flex-col">
+                <div className="shrink-0 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2 min-w-0">
                     <div className="h-9 w-9 rounded-md bg-muted text-foreground flex items-center justify-center shrink-0">
                       <FileText className="h-4 w-4" />
@@ -1065,21 +1071,17 @@ const CandidateDetailPage = () => {
                     Expand
                   </Button>
                 </div>
-                <Card>
-                  <CardContent className="py-5">
-                    <div className="rounded-lg bg-muted/50 p-4 sm:p-5 max-h-[70vh] overflow-auto">
-                      <pre className="whitespace-pre-wrap wrap-break-word text-sm font-mono leading-relaxed">
-                        {candidate.content}
-                      </pre>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="flex-1 overflow-y-auto min-h-0 px-4 sm:px-6 pb-4 sm:pb-6">
+                  <pre className="whitespace-pre-wrap wrap-break-word text-sm font-mono leading-relaxed">
+                    {candidate.content}
+                  </pre>
+                </div>
               </div>
             )}
 
             {activeTab === 'comments' && (
-              <div className="p-4 sm:p-6 max-w-full">
-                <div className="flex items-center gap-2 mb-5">
+              <div className="h-full flex flex-col">
+                <div className="shrink-0 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 flex items-center gap-2">
                   <div className="h-9 w-9 rounded-md bg-muted text-foreground flex items-center justify-center shrink-0">
                     <MessageSquare className="h-4 w-4" />
                   </div>
@@ -1091,7 +1093,8 @@ const CandidateDetailPage = () => {
                   </div>
                 </div>
 
-                <div className="space-y-3 mb-5">
+                <div className="flex-1 overflow-y-auto min-h-0 px-4 sm:px-6 pb-3">
+                <div className="space-y-3">
                   {comments.length === 0 ? (
                     <p className="text-sm text-muted-foreground italic">No comments yet. Be the first to add one.</p>
                   ) : (
@@ -1208,6 +1211,9 @@ const CandidateDetailPage = () => {
                   )}
                 </div>
 
+                </div>
+
+                <div className="shrink-0 px-4 sm:px-6 py-3 border-t bg-background">
                 <div className="rounded-lg border bg-card">
                   <Textarea
                     placeholder="Add a comment for the hiring team..."
@@ -1234,12 +1240,13 @@ const CandidateDetailPage = () => {
                     </Button>
                   </div>
                 </div>
+                </div>
               </div>
             )}
 
             {activeTab === 'review' && (
-              <div className="p-4 sm:p-6 max-w-full">
-                <div className="flex items-center gap-2 mb-5">
+              <div className="h-full flex flex-col">
+                <div className="shrink-0 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 flex items-center gap-2">
                   <div className="h-9 w-9 rounded-md bg-muted text-foreground flex items-center justify-center shrink-0">
                     <UserIcon className="h-4 w-4" />
                   </div>
@@ -1249,7 +1256,8 @@ const CandidateDetailPage = () => {
                   </div>
                 </div>
 
-                <Card className="mb-4">
+                <div className="flex-1 overflow-y-auto min-h-0 px-4 sm:px-6 pb-3">
+                <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Notes</CardTitle>
                   </CardHeader>
@@ -1269,6 +1277,9 @@ const CandidateDetailPage = () => {
                   </CardContent>
                 </Card>
 
+                </div>
+
+                <div className="shrink-0 px-4 sm:px-6 py-3 border-t bg-background">
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Decision</CardTitle>
@@ -1326,6 +1337,7 @@ const CandidateDetailPage = () => {
                     </div>
                   </CardContent>
                 </Card>
+                </div>
               </div>
             )}
           </div>

@@ -360,7 +360,7 @@ export default function App() {
 
   return (
     <div className="flex bg-muted">
-      <main className="container mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 w-full">
+      <main className="px-3 sm:px-6 lg:px-8 py-4 sm:py-8 w-full">
         <CandidateList />
       </main>
     </div>
