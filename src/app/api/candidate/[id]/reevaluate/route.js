@@ -1,5 +1,6 @@
 import { google } from 'googleapis';
 import { getServerSession } from 'next-auth/next';
+import { getToken } from 'next-auth/jwt';
 import { authOptions } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
@@ -27,9 +28,14 @@ export async function POST(request, context) {
             return NextResponse.json({ error: 'Candidate not found in DB' }, { status: 404 });
         }
 
+        const jwtToken = await getToken({ req: request });
+        if (!jwtToken?.accessToken) {
+            return NextResponse.json({ error: 'No access token available' }, { status: 401 });
+        }
+
         // Update Google Drive file properties
         const oauth2Client = new google.auth.OAuth2();
-        oauth2Client.setCredentials({ access_token: session.accessToken });
+        oauth2Client.setCredentials({ access_token: jwtToken.accessToken });
         const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
        

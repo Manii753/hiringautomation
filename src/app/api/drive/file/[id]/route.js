@@ -1,5 +1,6 @@
 import { google } from "googleapis";
 import { getServerSession } from "next-auth/next";
+import { getToken } from "next-auth/jwt";
 import { authOptions } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import mammoth from "mammoth";
@@ -91,8 +92,13 @@ export async function GET(request, context) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const jwtToken = await getToken({ req: request });
+  if (!jwtToken?.accessToken) {
+    return NextResponse.json({ error: "No access token available" }, { status: 401 });
+  }
+
   const oauth2Client = new google.auth.OAuth2();
-  oauth2Client.setCredentials({ access_token: session.accessToken });
+  oauth2Client.setCredentials({ access_token: jwtToken.accessToken });
 
   const drive = google.drive({ version: "v3", auth: oauth2Client });
 

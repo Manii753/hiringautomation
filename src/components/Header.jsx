@@ -43,13 +43,13 @@ const Header = () => {
   const [showSlackChannelDialog, setShowSlackChannelDialog] = useState(false);
   const [slackChannelName, setSlackChannelName] = useState(session?.user?.slackChannel || '');
   const [showClickUpTokenDialog, setShowClickUpTokenDialog] = useState(false);
-  const [clickUpAccessToken, setClickUpAccessToken] = useState(session?.user?.clickUpAccessToken || '');
+  const [clickUpAccessToken, setClickUpAccessToken] = useState('');
   const [clickUpUserInfo, setClickUpUserInfo] = useState(null);
   const [clickUpConnectionStatus, setClickUpConnectionStatus] = useState('');
   const [isSlackConnected,setSlackConnected]=useState(false);
   const [isClickUpConnected, setIsClickUpConnected] = useState(false);
   const [showManatalTokenDialog, setShowManatalTokenDialog] = useState(false);
-  const [manatalAccessToken, setManatalAccessToken] = useState(session?.user?.manatalAccessToken || '');
+  const [manatalAccessToken, setManatalAccessToken] = useState('');
   const [manatalOrgInfo, setManatalOrgInfo] = useState(null);
   const [manatalConnectionStatus, setManatalConnectionStatus] = useState('');
   const [isManatalConnected, setIsManatalConnected] = useState(false);
@@ -86,54 +86,52 @@ const Header = () => {
     refreshSessionAfterOAuth();
   }, [searchParams, status, update]);
   useEffect(() => {
-  
+
     if (session) {
-      
-      if (session?.user?.slackAccessToken) {
+
+      if (session?.slackConnected) {
         setSlackConnected(true);
-        
+
       }
       if (session.slackChannel) {
         setSlackChannelName(session.slackChannel);
       }
-      if (session?.user?.clickUpAccessToken) {
+      if (session?.clickUpConnected) {
         setIsClickUpConnected(true);
-        setClickUpAccessToken(session.user.clickUpAccessToken);
-        verifyClickUpToken(session.user.clickUpAccessToken);
+        verifyClickUpToken();
       }
-      if (session?.user?.manatalAccessToken) {
+      if (session?.manatalConnected) {
         setIsManatalConnected(true);
-        setManatalAccessToken(session.user.manatalAccessToken);
-        verifyManatalToken(session.user.manatalAccessToken);
+        verifyManatalToken();
       }
     }
-  
+
   }, [session]);
 
-  const verifyClickUpToken = async (token) => {
-    if (!token) {
+  const verifyClickUpToken = async (candidateToken) => {
+    if (candidateToken === '') {
       setClickUpConnectionStatus('Please enter a ClickUp access token.');
       setClickUpUserInfo(null);
       return false;
     }
     try {
-      const response = await fetch('https://api.clickup.com/api/v2/user', {
-        headers: {
-          'Authorization': token,
-        },
+      const response = await fetch('/api/user/verify-clickup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(candidateToken ? { token: candidateToken } : {}),
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      const data = await response.json().catch(() => ({}));
+
+      if (response.ok && data.ok) {
         setClickUpUserInfo(data.user);
         setClickUpConnectionStatus('Connected to ClickUp successfully!');
-        
         return true;
       } else {
-        const errorData = await response.json();
         setClickUpUserInfo(null);
-        setClickUpConnectionStatus(`Failed to connect to ClickUp: ${errorData.err}`);
-        toast.error(`Failed to verify ClickUp token: ${errorData.err}`);
+        const message = data.error || 'Failed to verify ClickUp token.';
+        setClickUpConnectionStatus(`Failed to connect to ClickUp: ${message}`);
+        toast.error(`Failed to verify ClickUp token: ${message}`);
         return false;
       }
     } catch (error) {
@@ -204,37 +202,30 @@ const Header = () => {
     setClickUpConnectionStatus('');
   };
 
-  const verifyManatalToken = async (token) => {
-    if (!token) {
+  const verifyManatalToken = async (candidateToken) => {
+    if (candidateToken === '') {
       setManatalConnectionStatus('Please enter a Manatal access token.');
       setManatalOrgInfo(null);
       return false;
     }
     try {
-      const response = await fetch('https://api.manatal.com/open/v3/organizations/', {
-        headers: {
-          'Authorization': `Token ${token}`,
-        },
+      const response = await fetch('/api/user/verify-manatal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(candidateToken ? { token: candidateToken } : {}),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data && data.results && data.results.length > 0) {
-          setManatalOrgInfo(data.results[0]);
-          setManatalConnectionStatus('Connected to Manatal successfully!');
-          return true;
-        } else {
-          setManatalOrgInfo(null);
-          setManatalConnectionStatus('Failed to connect to Manatal: No organizations found.');
-          toast.error('Manatal token is valid, but no organizations were found.');
-          return false;
-        }
+      const data = await response.json().catch(() => ({}));
+
+      if (response.ok && data.ok) {
+        setManatalOrgInfo(data.organization);
+        setManatalConnectionStatus('Connected to Manatal successfully!');
+        return true;
       } else {
-        const errorData = await response.json();
         setManatalOrgInfo(null);
-        const errorMessage = errorData.detail || (typeof errorData === 'string' ? errorData : 'Unknown error');
-        setManatalConnectionStatus(`Failed to connect to Manatal: ${errorMessage}`);
-        toast.error(`Failed to verify Manatal token: ${errorMessage}`);
+        const message = data.error || 'Failed to verify Manatal token.';
+        setManatalConnectionStatus(`Failed to connect to Manatal: ${message}`);
+        toast.error(`Failed to verify Manatal token: ${message}`);
         return false;
       }
     } catch (error) {
