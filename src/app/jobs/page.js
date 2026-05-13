@@ -175,7 +175,7 @@ export default function JobsPage() {
   };
 
   return (
-    <div className="container mx-auto py-10">
+    <div className="m-6 py-10">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Jobs</h1>
         <Button onClick={() => setShowNewJobDialog(true)}>Create New Job</Button>
@@ -184,7 +184,7 @@ export default function JobsPage() {
       {loading ? (
         <JobSkeleton />
       ) : jobs.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className=" grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {jobs.map((job) => (
             <Card key={job._id}>
               <CardHeader>
