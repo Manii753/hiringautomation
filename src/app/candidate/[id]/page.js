@@ -39,6 +39,7 @@ import {
   Calendar,
   Briefcase,
   Slack,
+  Plus,
 } from 'lucide-react';
 import Link from 'next/link';
 import CandidateDetailSkeleton from '@/components/candidateSkelton';
@@ -492,6 +493,45 @@ const CandidateDetailPage = () => {
     });
   };
 
+  const addArrayItem = (path, template) => {
+    setEditedWebhookResponse(prev => {
+      const next = JSON.parse(JSON.stringify(prev));
+      let cur = next;
+      for (let i = 0; i < path.length; i++) {
+        cur = cur[path[i]];
+      }
+      const clearValues = (v) => {
+        if (Array.isArray(v)) return [];
+        if (v && typeof v === 'object') {
+          const out = {};
+          for (const k of Object.keys(v)) out[k] = clearValues(v[k]);
+          return out;
+        }
+        return '';
+      };
+      cur.push(template && typeof template === 'object' ? clearValues(template) : '');
+      return next;
+    });
+  };
+
+  const removeArrayItem = (path, idx) => {
+    setEditedWebhookResponse(prev => {
+      const next = JSON.parse(JSON.stringify(prev));
+      let cur = next;
+      for (let i = 0; i < path.length; i++) {
+        cur = cur[path[i]];
+      }
+      cur.splice(idx, 1);
+      return next;
+    });
+  };
+
+  const isShortPrimitive = (v) =>
+    typeof v === 'number' ||
+    typeof v === 'boolean' ||
+    v == null ||
+    (typeof v === 'string' && v.length <= 60 && !v.includes('\n'));
+
   const renderViewValue = (value) => {
     if (value === null || value === undefined || value === '') {
       return <span className="text-muted-foreground italic text-sm">N/A</span>;
@@ -549,50 +589,143 @@ const CandidateDetailPage = () => {
     return <span className="block text-sm whitespace-pre-wrap wrap-anywhere leading-relaxed">{String(value)}</span>;
   };
 
+  const renderPrimitiveEditor = (value, path) => {
+    const str = value == null ? '' : String(value);
+    if (isShortPrimitive(value)) {
+      return (
+        <Input
+          value={str}
+          onChange={(e) => updateAtPath(path, e.target.value)}
+          className="h-8 text-sm"
+        />
+      );
+    }
+    return (
+      <Textarea
+        value={str}
+        onChange={(e) => updateAtPath(path, e.target.value)}
+        className="min-h-9 text-sm py-1.5"
+      />
+    );
+  };
+
   const renderEditValue = (value, path) => {
     if (Array.isArray(value)) {
-      return (
-        <div className="pl-2 sm:pl-4 mt-2 border-l-2 space-y-2 min-w-0">
-          {value.map((item, idx) => (
-            <div key={idx} className="space-y-2 min-w-0">
-              <h4 className="font-medium">Item {idx + 1}</h4>
-              {typeof item === 'object' && item !== null ? (
-                Object.entries(item).map(([k, v]) => (
-                  <div key={k}>
-                    <label className="text-sm font-medium capitalize">{k.replace(/_/g, ' ')}</label>
-                    {renderEditValue(v, [...path, idx, k])}
+      if (value.length === 0) {
+        return (
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground italic text-sm">None</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => addArrayItem(path, '')}
+            >
+              <Plus className="h-3 w-3 mr-1" />
+              Add item
+            </Button>
+          </div>
+        );
+      }
+      const isPrimitiveArray = value.every(v => typeof v !== 'object' || v === null);
+      if (isPrimitiveArray) {
+        return (
+          <div className="space-y-1.5">
+            <ul className="space-y-1.5">
+              {value.map((item, idx) => (
+                <li key={idx} className="flex gap-2 items-start">
+                  <span className="mt-3.5 h-1 w-1 rounded-full bg-muted-foreground/50 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    {renderPrimitiveEditor(item, [...path, idx])}
                   </div>
-                ))
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-destructive shrink-0"
+                    onClick={() => removeArrayItem(path, idx)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => addArrayItem(path, '')}
+            >
+              <Plus className="h-3 w-3 mr-1" />
+              Add item
+            </Button>
+          </div>
+        );
+      }
+      return (
+        <div className="space-y-1.5">
+          {value.map((item, idx) => (
+            <div key={idx} className="rounded-md bg-muted/40 p-2.5 text-sm min-w-0">
+              {typeof item === 'object' && item !== null ? (
+                <div className="space-y-1.5">
+                  <div className="flex justify-end -mb-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-destructive"
+                      onClick={() => removeArrayItem(path, idx)}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  {Object.entries(item).map(([k, v]) => (
+                    <div key={k} className="grid grid-cols-1 sm:grid-cols-[130px_1fr] gap-1 sm:gap-2 sm:items-start">
+                      <span className="text-xs font-medium text-muted-foreground capitalize sm:mt-2">{k.replace(/_/g, ' ')}</span>
+                      <div className="min-w-0">{renderEditValue(v, [...path, idx, k])}</div>
+                    </div>
+                  ))}
+                </div>
               ) : (
-                <Textarea
-                  value={String(item ?? '')}
-                  onChange={(e) => updateAtPath([...path, idx], e.target.value)}
-                />
+                <div className="flex gap-2 items-start">
+                  <div className="flex-1 min-w-0">
+                    {renderPrimitiveEditor(item, [...path, idx])}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-destructive shrink-0"
+                    onClick={() => removeArrayItem(path, idx)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               )}
             </div>
           ))}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs"
+            onClick={() => addArrayItem(path, value[0])}
+          >
+            <Plus className="h-3 w-3 mr-1" />
+            Add item
+          </Button>
         </div>
       );
     }
     if (typeof value === 'object' && value !== null) {
       return (
-        <div className="space-y-2 pl-2 sm:pl-4 min-w-0">
+        <div className="space-y-1.5">
           {Object.entries(value).map(([k, v]) => (
-            <div key={k} className="min-w-0">
-              <label className="text-sm font-medium capitalize">{k.replace(/_/g, ' ')}</label>
-              {renderEditValue(v, [...path, k])}
+            <div key={k} className="grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-1 sm:gap-3 sm:items-start">
+              <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium sm:mt-2">{k.replace(/_/g, ' ')}</span>
+              <div className="min-w-0">{renderEditValue(v, [...path, k])}</div>
             </div>
           ))}
         </div>
       );
     }
-    return (
-      <Textarea
-        value={String(value ?? '')}
-        onChange={(e) => updateAtPath(path, e.target.value)}
-        className="mt-1"
-      />
-    );
+    return renderPrimitiveEditor(value, path);
   };
 
   if (loading || !candidate) {
@@ -615,6 +748,27 @@ const CandidateDetailPage = () => {
   const featuredScore = webhookResponse?.fit_score || webhookResponse?.score;
   const otherWebhookEntries = webhookResponse
     ? Object.entries(webhookResponse).filter(([k]) => !['overall_recommendation', 'recommendation', 'fit_score', 'score'].includes(k))
+    : [];
+
+  // Same logic against the editable copy so edit-mode mirrors view-mode layout
+  const editedFeaturedRecKey = editedWebhookResponse
+    ? ('overall_recommendation' in editedWebhookResponse
+      ? 'overall_recommendation'
+      : 'recommendation' in editedWebhookResponse
+      ? 'recommendation'
+      : null)
+    : null;
+  const editedFeaturedScoreKey = editedWebhookResponse
+    ? ('fit_score' in editedWebhookResponse
+      ? 'fit_score'
+      : 'score' in editedWebhookResponse
+      ? 'score'
+      : null)
+    : null;
+  const editedFeaturedRec = editedFeaturedRecKey ? editedWebhookResponse[editedFeaturedRecKey] : null;
+  const editedFeaturedScore = editedFeaturedScoreKey ? editedWebhookResponse[editedFeaturedScoreKey] : null;
+  const editedOtherEntries = editedWebhookResponse
+    ? Object.entries(editedWebhookResponse).filter(([k]) => !['overall_recommendation', 'recommendation', 'fit_score', 'score'].includes(k))
     : [];
 
   const tabs = [
@@ -1003,16 +1157,54 @@ const CandidateDetailPage = () => {
                     </CardContent>
                   </Card>
                 ) : isEditing ? (
-                  <Card>
-                    <CardContent className="py-5 space-y-4 min-w-0">
-                      {Object.entries(editedWebhookResponse || {}).map(([key, value]) => (
-                        <div key={key}>
-                          <h3 className="font-semibold text-foreground capitalize">{key.replace(/_/g, ' ')}</h3>
-                          {renderEditValue(value, [key])}
+                  <>
+                    {(editedFeaturedRecKey || editedFeaturedScoreKey) && (
+                      <div className="rounded-xl border border-primary/20 bg-linear-to-br from-primary/5 to-transparent p-4 mb-4">
+                        <div className="flex items-start justify-between gap-4 flex-wrap">
+                          {editedFeaturedRecKey && (
+                            <div className="min-w-0 flex-1">
+                              <div className="text-[10px] uppercase tracking-wider text-primary font-semibold mb-1">Recommendation</div>
+                              {typeof editedFeaturedRec === 'string' || typeof editedFeaturedRec === 'number' || editedFeaturedRec == null ? (
+                                <Input
+                                  value={editedFeaturedRec == null ? '' : String(editedFeaturedRec)}
+                                  onChange={(e) => updateAtPath([editedFeaturedRecKey], e.target.value)}
+                                  className="h-9 text-base font-semibold"
+                                />
+                              ) : (
+                                renderEditValue(editedFeaturedRec, [editedFeaturedRecKey])
+                              )}
+                            </div>
+                          )}
+                          {editedFeaturedScoreKey && (
+                            <div className="text-right shrink-0">
+                              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">Fit Score</div>
+                              {typeof editedFeaturedScore === 'string' || typeof editedFeaturedScore === 'number' || editedFeaturedScore == null ? (
+                                <Input
+                                  value={editedFeaturedScore == null ? '' : String(editedFeaturedScore)}
+                                  onChange={(e) => updateAtPath([editedFeaturedScoreKey], e.target.value)}
+                                  className="h-9 w-24 text-xl font-semibold text-primary text-right tabular-nums"
+                                />
+                              ) : (
+                                renderEditValue(editedFeaturedScore, [editedFeaturedScoreKey])
+                              )}
+                            </div>
+                          )}
                         </div>
-                      ))}
-                    </CardContent>
-                  </Card>
+                      </div>
+                    )}
+                    <Card>
+                      <CardContent className="py-5 space-y-5 min-w-0">
+                        {editedOtherEntries.map(([key, value]) => (
+                          <section key={key}>
+                            <h3 className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-2">
+                              {key.replace(/_/g, ' ')}
+                            </h3>
+                            <div>{renderEditValue(value, [key])}</div>
+                          </section>
+                        ))}
+                      </CardContent>
+                    </Card>
+                  </>
                 ) : (
                   <>
                     {(featuredRecommendation || featuredScore) && (

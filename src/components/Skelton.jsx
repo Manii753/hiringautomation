@@ -22,7 +22,7 @@ const CandidateListSkeleton = () => {
       {/* Mobile card list skeleton */}
       <div className="md:hidden">
         <ScrollArea className="h-[calc(100vh-260px)] w-full">
-          <div className="space-y-2">
+          <div className="space-y-2 h-[calc(100vh-260px)] w-full">
             {[...Array(8)].map((_, index) => (
               <Card key={index}>
                 <CardContent className="p-3 flex items-start justify-between gap-3">
@@ -43,9 +43,9 @@ const CandidateListSkeleton = () => {
       {/* Desktop / tablet table skeleton */}
       <Card className="hidden md:block">
         <CardContent className="p-0">
-          <ScrollArea className="h-[calc(100vh-243px)] w-full overflow-x-auto">
+          <ScrollArea className="h-[calc(100vh-243px)] w-full overflow-x-auto overflow-y-hidden">
             <table className="w-full">
-              <thead className="bg-muted border-b">
+              <thead className="sticky top-0 bg-muted border-b">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Name</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Interview Date</th>
