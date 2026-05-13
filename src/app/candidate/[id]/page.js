@@ -826,7 +826,7 @@ const CandidateDetailPage = () => {
           {webhookResponse && (
             <Button
               onClick={handleSendToSlack}
-              disabled={isSendingToSlack || !user?.slackAccessToken || isManatalLoading}
+              disabled={isSendingToSlack || !session?.slackConnected || isManatalLoading}
               size="sm"
               className="h-8"
             >

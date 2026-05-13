@@ -1,7 +1,8 @@
 import { google } from 'googleapis';
 import { getServerSession } from 'next-auth/next';
+import { getToken } from 'next-auth/jwt';
 import { authOptions } from "@/lib/auth";
-import { NextResponse } from 'next/server'; 
+import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import Candidate from '@/lib/models/Candidate';
 
@@ -26,9 +27,14 @@ export async function POST(request) {
   }
 
   try {
+    const jwtToken = await getToken({ req: request });
+    if (!jwtToken?.accessToken) {
+      return NextResponse.json({ error: 'No access token available' }, { status: 401 });
+    }
+
     // 1. Update Google Drive file status
     const oauth2Client = new google.auth.OAuth2();
-    oauth2Client.setCredentials({ access_token: session.accessToken });
+    oauth2Client.setCredentials({ access_token: jwtToken.accessToken });
     const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
     // 2. Send data to n8n webhook
