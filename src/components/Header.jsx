@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from './ui/badge';
 import { Menu, AlertTriangle, Check, LogOut, Briefcase } from 'lucide-react';
-import {useEffect, useState } from 'react';
+import {useEffect, useRef, useState } from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,6 +54,7 @@ const Header = () => {
   const [manatalConnectionStatus, setManatalConnectionStatus] = useState('');
   const [isManatalConnected, setIsManatalConnected] = useState(false);
   const candidateId = pathname.startsWith('/candidate/') ? pathname.split('/')[2] : 'home';
+  const verifiedRef = useRef(false);
 
     useEffect(() => {
     const refreshSessionAfterOAuth = async () => {
@@ -86,27 +87,36 @@ const Header = () => {
     refreshSessionAfterOAuth();
   }, [searchParams, status, update]);
   useEffect(() => {
+    if (!session || verifiedRef.current) return;
+    verifiedRef.current = true;
 
-    if (session) {
+    if (session.slackConnected) setSlackConnected(true);
+    if (session.clickUpConnected) setIsClickUpConnected(true);
+    if (session.manatalConnected) setIsManatalConnected(true);
+    if (session.slackChannel) setSlackChannelName(session.slackChannel);
 
-      if (session?.slackConnected) {
-        setSlackConnected(true);
+    const verifyConnections = async () => {
+      try {
+        const response = await fetch('/api/user/verify-connections', { method: 'POST' });
+        if (!response.ok) return;
+        const data = await response.json();
 
-      }
-      if (session.slackChannel) {
-        setSlackChannelName(session.slackChannel);
-      }
-      if (session?.clickUpConnected) {
-        setIsClickUpConnected(true);
-        verifyClickUpToken();
-      }
-      if (session?.manatalConnected) {
-        setIsManatalConnected(true);
-        verifyManatalToken();
-      }
-    }
+        setSlackConnected(data.slack.connected);
+        setIsClickUpConnected(data.clickUp.connected);
+        if (data.clickUp.user) setClickUpUserInfo(data.clickUp.user);
+        setIsManatalConnected(data.manatal.connected);
+        if (data.manatal.organization) setManatalOrgInfo(data.manatal.organization);
 
-  }, [session]);
+        if (data.slack.changed || data.clickUp.changed || data.manatal.changed) {
+          await update();
+        }
+      } catch (error) {
+        console.error('Error verifying connections:', error);
+      }
+    };
+
+    verifyConnections();
+  }, [session, update]);
 
   const verifyClickUpToken = async (candidateToken) => {
     if (candidateToken === '') {

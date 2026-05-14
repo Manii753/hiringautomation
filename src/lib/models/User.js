@@ -18,6 +18,7 @@ const UserSchema = new mongoose.Schema({
     type: String,
   },
   image: String,
+  
   slackAccessToken: String, 
   
   slackUserId: String,
