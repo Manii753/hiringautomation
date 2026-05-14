@@ -37,6 +37,38 @@ export async function POST(request) {
     oauth2Client.setCredentials({ access_token: jwtToken.accessToken });
     const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
+    // Pre-check: confirm the user has edit access to the Drive file before doing
+    // anything irreversible (n8n call, DB write). Without canEdit, the final
+    // appProperties update will 403 and leave the candidate in an inconsistent state.
+    let canEdit = false;
+    let ownerInfo = null;
+    try {
+      const fileMeta = await drive.files.get({
+        fileId,
+        fields: "capabilities(canEdit),owners(displayName,emailAddress)",
+        supportsAllDrives: true,
+      });
+      canEdit = !!fileMeta.data.capabilities?.canEdit;
+      ownerInfo = fileMeta.data.owners?.[0] || null;
+    } catch (err) {
+      console.error('Error checking Drive file permissions:', err);
+      return NextResponse.json(
+        { error: 'Could not verify access to this file', code: 'PERMISSION_CHECK_FAILED' },
+        { status: err.code || 500 }
+      );
+    }
+
+    if (!canEdit) {
+      return NextResponse.json(
+        {
+          error: "You don't have edit access to this candidate's file. Please ask the file owner to grant you edit access.",
+          code: 'NO_EDIT_ACCESS',
+          owner: ownerInfo,
+        },
+        { status: 403 }
+      );
+    }
+
     // 2. Send data to n8n webhook
     const webhookResponse = await fetch(N8N_WEBHOOK_URL, {
       method: 'POST',
@@ -69,7 +101,7 @@ export async function POST(request) {
       { upsert: true, new: true }
     );
 
-    // 3. Update file with status and webhook response
+    // 3. Update file with status
     await drive.files.update({
         fileId: fileId,
         requestBody: {

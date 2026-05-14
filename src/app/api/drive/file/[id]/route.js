@@ -106,7 +106,7 @@ export async function GET(request, context) {
     // 1️⃣ Get the target file (Notes by Gemini)
     const fileMetadata = await drive.files.get({
       fileId,
-      fields: "name,createdTime,mimeType,appProperties,parents",
+      fields: "name,createdTime,mimeType,appProperties,parents,owners(displayName,emailAddress,photoLink),capabilities(canEdit)",
       supportsAllDrives: true,
     });
 

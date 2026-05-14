@@ -79,6 +79,7 @@ const CandidateDetailPage = () => {
   const [allJobs, setAllJobs] = useState([]);
   const [isEditingJob, setIsEditingJob] = useState(false);
   const [showManatalWarning, setShowManatalWarning] = useState(false);
+  const [showAccessAlert, setShowAccessAlert] = useState(false);
 
   // Email editing states
   const [isEditingEmail, setIsEditingEmail] = useState(false);
@@ -349,6 +350,10 @@ const CandidateDetailPage = () => {
   };
 
   const handleStatusChange = async (status) => {
+    if (candidate?.capabilities?.canEdit === false) {
+      setShowAccessAlert(true);
+      return;
+    }
     setIsSubmitting(status);
     try {
       const response = await fetch('/api/webhook', {
@@ -373,7 +378,12 @@ const CandidateDetailPage = () => {
           setActiveTab('ai');
         }
       } else {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 403 && errorData.code === 'NO_EDIT_ACCESS') {
+          setShowAccessAlert(true);
+        } else {
+          toast.error(errorData.error || 'Failed to update candidate status');
+        }
         console.error('Failed to update candidate status:', response.status, errorData);
       }
     } catch (error) {
@@ -455,6 +465,10 @@ const CandidateDetailPage = () => {
   };
 
   const handleReevaluate = async () => {
+    if (candidate?.capabilities?.canEdit === false) {
+      setShowAccessAlert(true);
+      return;
+    }
     setIsReevaluating(true);
     try {
       const response = await fetch(`/api/candidate/${candidateId}/reevaluate`, {
@@ -473,7 +487,12 @@ const CandidateDetailPage = () => {
           }
         }));
       } else {
-        toast.error('Failed to set for re-evaluation.');
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 403 && errorData.code === 'NO_EDIT_ACCESS') {
+          setShowAccessAlert(true);
+        } else {
+          toast.error(errorData.error || 'Failed to set for re-evaluation.');
+        }
       }
     } catch (error) {
       toast.error('An error occurred during re-evaluation.');
@@ -742,6 +761,8 @@ const CandidateDetailPage = () => {
   const status = candidate.appProperties?.status || 'pending';
   const statusVariant = status === 'pass' ? 'green' : status === 'fail' ? 'destructive' : 'default';
   const decisionLocked = status === 'pass' || status === 'fail';
+  const canEdit = candidate.capabilities?.canEdit !== false;
+  const ownerName = candidate.owners?.[0]?.displayName || candidate.owners?.[0]?.emailAddress || null;
 
   // Pull out featured fields if present
   const featuredRecommendation = webhookResponse?.overall_recommendation || webhookResponse?.recommendation;
@@ -802,26 +823,39 @@ const CandidateDetailPage = () => {
             <span className="font-mono">{session?.slackChannel || '—'}</span>
           </div>
           {(webhookResponse || status === 'pass' || status === 'fail') && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline" size="sm" disabled={isReevaluating} className="h-8">
-                  {isReevaluating ? <Loader2 className="h-3.5 w-3.5 sm:mr-1.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5 sm:mr-1.5" />}
-                  <span className="hidden sm:inline">Re-evaluate</span>
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will reset the evaluation status to 'pending' and delete the current AI summary and manager comment. This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleReevaluate}>Confirm</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            canEdit ? (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm" disabled={isReevaluating} className="h-8">
+                    {isReevaluating ? <Loader2 className="h-3.5 w-3.5 sm:mr-1.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5 sm:mr-1.5" />}
+                    <span className="hidden sm:inline">Re-evaluate</span>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will reset the evaluation status to 'pending' and delete the current AI summary and manager comment. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleReevaluate}>Confirm</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled
+                title="You don't have edit access to this file"
+                className="h-8 opacity-50 cursor-not-allowed"
+              >
+                <RefreshCw className="h-3.5 w-3.5 sm:mr-1.5" />
+                <span className="hidden sm:inline">Re-evaluate</span>
+              </Button>
+            )
           )}
           {webhookResponse && (
             <Button
@@ -840,6 +874,23 @@ const CandidateDetailPage = () => {
           )}
         </div>
       </header>
+
+      {/* No Edit Access Alert */}
+      <AlertDialog open={showAccessAlert} onOpenChange={setShowAccessAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>No edit access to this candidate</AlertDialogTitle>
+            <AlertDialogDescription>
+              {ownerName
+                ? `You don't have edit access to this candidate's file. Please ask the file owner (${ownerName}) to grant you edit access before passing or failing.`
+                : "You don't have edit access to this candidate's file. Please ask the file owner to grant you edit access before passing or failing."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowAccessAlert(false)}>Got it</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Manatal Warning Dialog */}
       <AlertDialog open={showManatalWarning} onOpenChange={setShowManatalWarning}>
@@ -959,6 +1010,35 @@ const CandidateDetailPage = () => {
                 <div className="text-sm break-all">{candidate.email || 'No email'}</div>
               )}
             </div>
+
+            {/* Owner */}
+            {candidate.owners?.[0] && (
+              <div className="border-t pt-3">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1.5">File Owner</div>
+                <div className="flex items-center gap-2">
+                  {candidate.owners[0].photoLink ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={candidate.owners[0].photoLink}
+                      alt={candidate.owners[0].displayName || 'Owner'}
+                      className="h-7 w-7 rounded-full shrink-0"
+                    />
+                  ) : (
+                    <div className="h-7 w-7 rounded-full bg-muted text-foreground text-xs font-semibold flex items-center justify-center shrink-0">
+                      {(candidate.owners[0].displayName || candidate.owners[0].emailAddress || '?').charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    {candidate.owners[0].displayName && (
+                      <div className="text-sm font-medium truncate">{candidate.owners[0].displayName}</div>
+                    )}
+                    {candidate.owners[0].emailAddress && (
+                      <div className="text-[11px] text-muted-foreground break-all">{candidate.owners[0].emailAddress}</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Interview */}
             <div className="border-t pt-3">
@@ -1486,14 +1566,20 @@ const CandidateDetailPage = () => {
                     <CardTitle className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">Decision</CardTitle>
                   </CardHeader>
                   <CardContent>
+                    {!canEdit && !decisionLocked && (
+                      <div className="mb-2 sm:mb-3 text-[10px] sm:text-[11px] text-muted-foreground">
+                        You don't have edit access to this file{ownerName ? ` — ask ${ownerName} for access` : ''}.
+                      </div>
+                    )}
                     <div className="grid grid-cols-2 gap-2 sm:gap-3">
                       <button
                         onClick={() => handleStatusChange('pass')}
-                        disabled={isSubmitting || status === 'pass' || !!webhookResponse}
+                        disabled={isSubmitting || status === 'pass' || !!webhookResponse || !canEdit}
+                        title={!canEdit ? "You don't have edit access to this file" : undefined}
                         className={cn(
                           "group rounded-lg border-2 p-2.5 sm:p-4 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
                           status === 'pass' ? "border-green-500 bg-green-500/10" : "border-border hover:border-green-500/60 bg-card",
-                          (isSubmitting || (!!webhookResponse && status !== 'pass')) && "opacity-50 cursor-not-allowed"
+                          (isSubmitting || (!!webhookResponse && status !== 'pass') || !canEdit) && "opacity-50 cursor-not-allowed"
                         )}
                       >
                         <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
@@ -1513,11 +1599,12 @@ const CandidateDetailPage = () => {
                       </button>
                       <button
                         onClick={() => handleStatusChange('fail')}
-                        disabled={isSubmitting || status === 'fail' || !!webhookResponse}
+                        disabled={isSubmitting || status === 'fail' || !!webhookResponse || !canEdit}
+                        title={!canEdit ? "You don't have edit access to this file" : undefined}
                         className={cn(
                           "group rounded-lg border-2 p-2.5 sm:p-4 text-left transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
                           status === 'fail' ? "border-destructive bg-destructive/10" : "border-border hover:border-destructive/60 bg-card",
-                          (isSubmitting || (!!webhookResponse && status !== 'fail')) && "opacity-50 cursor-not-allowed"
+                          (isSubmitting || (!!webhookResponse && status !== 'fail') || !canEdit) && "opacity-50 cursor-not-allowed"
                         )}
                       >
                         <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
