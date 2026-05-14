@@ -85,17 +85,18 @@ const CandidateList = () => {
       setLoading(true);
       const response = await fetch('/api/drive/files');
       const data = await response.json();
-      setCandidates(data);
+      setCandidates(Array.isArray(data) ? data : []);
       setLoading(false);
     } catch (err) {
 
       setLoading(false);
+      console.error('Error fetching candidates:', err);
       if(err.status === 401) {
         toast.error('Session expired. Please sign in again.');
         signOut();
       }
     }
-    
+
   };
   
 
@@ -151,7 +152,33 @@ const CandidateList = () => {
 
   if (loading) {
     return  <CandidateListSkeleton />;
-    
+
+  }
+
+  if (candidates.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+        <Card className="max-w-md w-full">
+          <CardContent className="p-8 text-center space-y-4">
+            <h2 className="text-lg font-semibold text-foreground">
+              No interview recordings found
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              You don&apos;t have any meetings recorded with candidates in your Drive, or nobody has shared any recorded meeting with you on Drive yet.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fetchCandidates()}
+              className="mt-2"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (

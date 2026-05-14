@@ -34,8 +34,7 @@ export async function GET(request) {
     
 
     if (!folderRes.data.files.length) {
-      console.log("folder not found")
-      return NextResponse.json({ error: `Folder "${folderName}" not found.` }, { status: 404 })
+      return NextResponse.json([])
     }
 
     
