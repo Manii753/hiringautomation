@@ -16,6 +16,46 @@ export async function POST(request, context) {
     }
 
     try {
+        const jwtToken = await getToken({ req: request });
+        if (!jwtToken?.accessToken) {
+            return NextResponse.json({ error: 'No access token available' }, { status: 401 });
+        }
+
+        const oauth2Client = new google.auth.OAuth2();
+        oauth2Client.setCredentials({ access_token: jwtToken.accessToken });
+        const drive = google.drive({ version: 'v3', auth: oauth2Client });
+
+        // Pre-check edit access before mutating DB or Drive — without canEdit
+        // the appProperties update will 403 and leave DB cleared but Drive untouched.
+        let canEdit = false;
+        let ownerInfo = null;
+        try {
+            const fileMeta = await drive.files.get({
+                fileId,
+                fields: "capabilities(canEdit),owners(displayName,emailAddress)",
+                supportsAllDrives: true,
+            });
+            canEdit = !!fileMeta.data.capabilities?.canEdit;
+            ownerInfo = fileMeta.data.owners?.[0] || null;
+        } catch (err) {
+            console.error('Error checking Drive file permissions:', err);
+            return NextResponse.json(
+                { error: 'Could not verify access to this file', code: 'PERMISSION_CHECK_FAILED' },
+                { status: err.code || 500 }
+            );
+        }
+
+        if (!canEdit) {
+            return NextResponse.json(
+                {
+                    error: "You don't have edit access to this candidate's file. Please ask the file owner to grant you edit access.",
+                    code: 'NO_EDIT_ACCESS',
+                    owner: ownerInfo,
+                },
+                { status: 403 }
+            );
+        }
+
         // Update database
         await dbConnect();
         const candidate = await Candidate.findOneAndUpdate(
@@ -27,20 +67,6 @@ export async function POST(request, context) {
         if (!candidate) {
             return NextResponse.json({ error: 'Candidate not found in DB' }, { status: 404 });
         }
-
-        const jwtToken = await getToken({ req: request });
-        if (!jwtToken?.accessToken) {
-            return NextResponse.json({ error: 'No access token available' }, { status: 401 });
-        }
-
-        // Update Google Drive file properties
-        const oauth2Client = new google.auth.OAuth2();
-        oauth2Client.setCredentials({ access_token: jwtToken.accessToken });
-        const drive = google.drive({ version: 'v3', auth: oauth2Client });
-
-       
-
-        
 
         await drive.files.update({
             fileId: fileId,
