@@ -4,14 +4,12 @@ import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/dbConnect';
 import User from '@/lib/models/User';
 
-const SLACK_INVALID_ERRORS = new Set([
-  'invalid_auth',
-  'token_revoked',
-  'token_expired',
-  'account_inactive',
-  'not_authed',
-  'no_permission',
-  'missing_scope',
+const SLACK_TRANSIENT_ERRORS = new Set([
+  'ratelimited',
+  'fatal_error',
+  'internal_error',
+  'service_unavailable',
+  'request_timeout',
 ]);
 
 async function checkSlack(token) {
@@ -27,8 +25,10 @@ async function checkSlack(token) {
     if (data?.ok) {
       return { connected: true, invalid: false };
     }
-    const invalid = SLACK_INVALID_ERRORS.has(data?.error);
-    return { connected: false, invalid };
+    if (SLACK_TRANSIENT_ERRORS.has(data?.error)) {
+      return { connected: true, invalid: false };
+    }
+    return { connected: false, invalid: true };
   } catch {
     return { connected: true, invalid: false };
   }
@@ -102,16 +102,22 @@ export async function POST() {
     return NextResponse.json({ error: 'User not found' }, { status: 404 });
   }
 
+  const sessionFlags = {
+    slack: !!session.slackConnected,
+    clickUp: !!session.clickUpConnected,
+    manatal: !!session.manatalConnected,
+  };
+
   const [slackResult, clickUpResult, manatalResult] = await Promise.all([
     user.slackAccessToken
       ? checkSlack(user.slackAccessToken)
-      : Promise.resolve({ connected: false, invalid: false }),
+      : Promise.resolve({ connected: false, invalid: false, changed: sessionFlags.slack }),
     user.clickUpAccessToken
       ? checkClickUp(user.clickUpAccessToken)
-      : Promise.resolve({ connected: false, invalid: false }),
+      : Promise.resolve({ connected: false, invalid: false, changed: sessionFlags.clickUp }),
     user.manatalAccessToken
       ? checkManatal(user.manatalAccessToken)
-      : Promise.resolve({ connected: false, invalid: false }),
+      : Promise.resolve({ connected: false, invalid: false, changed: sessionFlags.manatal }),
   ]);
 
   const unset = {};
@@ -134,16 +140,16 @@ export async function POST() {
   return NextResponse.json({
     slack: {
       connected: slackResult.connected,
-      changed: slackResult.invalid,
+      changed: slackResult.invalid || !!slackResult.changed,
     },
     clickUp: {
       connected: clickUpResult.connected,
-      changed: clickUpResult.invalid,
+      changed: clickUpResult.invalid || !!clickUpResult.changed,
       user: clickUpResult.user ?? null,
     },
     manatal: {
       connected: manatalResult.connected,
-      changed: manatalResult.invalid,
+      changed: manatalResult.invalid || !!manatalResult.changed,
       organization: manatalResult.organization ?? null,
     },
   });
