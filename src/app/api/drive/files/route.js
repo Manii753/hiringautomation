@@ -39,21 +39,26 @@ export async function GET(request) {
 
     
 
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    const sixMonthsAgoISO = sixMonthsAgo.toISOString();
+
     // Replace the for loop with Promise.all
     const allFilesPromises = folderRes.data.files.map(async (folder) => {
       const folderId = folder.id;
       let folderFiles = [];
       let pageToken = null;
-      
+
       do {
         const filesRes = await drive.files.list({
-          q: `'${folderId}' in parents 
-              and trashed=false 
-              and (mimeType='application/pdf' 
-                or mimeType='application/vnd.google-apps.document' 
-                or mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
-                or mimeType='text/plain') 
-              and name contains 'notes by gemini'`,
+          q: `'${folderId}' in parents
+              and trashed=false
+              and (mimeType='application/pdf'
+                or mimeType='application/vnd.google-apps.document'
+                or mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                or mimeType='text/plain')
+              and name contains 'notes by gemini'
+              and createdTime >= '${sixMonthsAgoISO}'`,
           pageSize: 100,
           fields: 'nextPageToken, files(id, name, mimeType, createdTime, appProperties, owners(displayName, emailAddress))',
           pageToken: pageToken || undefined,

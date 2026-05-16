@@ -54,6 +54,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const CandidateDetailPage = () => {
   const params = useParams();
@@ -858,19 +863,30 @@ const CandidateDetailPage = () => {
             )
           )}
           {webhookResponse && (
-            <Button
-              onClick={handleSendToSlack}
-              disabled={isSendingToSlack || !session?.slackConnected || isManatalLoading}
-              size="sm"
-              className="h-8"
-            >
-              {isSendingToSlack || isManatalLoading ? (
-                <Loader2 className="h-3.5 w-3.5 sm:mr-1.5 animate-spin" />
-              ) : (
-                <Send className="h-3.5 w-3.5 sm:mr-1.5" />
-              )}
-              <span className="hidden sm:inline">{isManatalLoading ? 'Loading…' : 'Send Notes'}</span>
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span tabIndex={0} className="inline-flex">
+                  <Button
+                    onClick={handleSendToSlack}
+                    disabled={isSendingToSlack || !session?.slackConnected || isManatalLoading}
+                    size="sm"
+                    className="h-8"
+                  >
+                    {isSendingToSlack || isManatalLoading ? (
+                      <Loader2 className="h-3.5 w-3.5 sm:mr-1.5 animate-spin" />
+                    ) : (
+                      <Send className="h-3.5 w-3.5 sm:mr-1.5" />
+                    )}
+                    <span className="hidden sm:inline">{isManatalLoading ? 'Loading…' : 'Send Notes'}</span>
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {session?.slackConnected
+                  ? 'Send notes to Manatal, Slack and ClickUp'
+                  : 'Slack is not connected'}
+              </TooltipContent>
+            </Tooltip>
           )}
         </div>
       </header>

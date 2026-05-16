@@ -32,6 +32,16 @@ const CandidateSchema = new mongoose.Schema({
     type: String,
   },
 
+  sentToSlack:{
+    type:Boolean
+  },
+  sentToManatal:{
+    type:Boolean
+  },
+  sentToClickUp:{
+    type:Boolean
+  },
+
   managerComment: {
     type: String,
   },
